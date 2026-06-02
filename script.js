@@ -3,6 +3,10 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 
 const userId = tg.initDataUnsafe?.user?.id || 12345;
+console.log(tg.initDataUnsafe);
+console.log(userId);
+
+
 
 document.getElementById('auth-btn').onclick = async () => {
     const response = await fetch(`${API_URL}/auth`, {
