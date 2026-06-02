@@ -1,31 +1,179 @@
 <!DOCTYPE html>
 <html lang="ru">
-    
 <head>
-    <meta charset="UTF-8">
-    <title>Панель мониторинга</title>
-    <link rel="stylesheet" href="style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Price Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Price Service</h1>
-        <div id="auth-form">
-            <input type="text" id="username" placeholder="Логин">
-            <input type="password" id="password" placeholder="Пароль">
-            <button id="auth-btn">Войти</button>
-        </div>
-        
-        <div id="task-form" class="hidden">
-            <input type="text" id="url" placeholder="Ссылка на товар">
-            <select id="type">
-                <option value="price">Мониторинг цены</option>
-                <option value="stock">Мониторинг наличия</option>
-            </select>
-            <button id="add-task-btn">Запустить мониторинг</button>
-        </div>
+
+<!-- SCREEN: Loading -->
+<div id="screen-loading" class="screen active">
+  <div class="loader-wrap">
+    <div class="logo-mark">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">PRICE<br>MONITOR</span>
     </div>
-    <script src="script.js"></script>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+    <p class="loader-hint">Загрузка...</p>
+  </div>
+</div>
+
+<!-- SCREEN: Tutorial -->
+<div id="screen-tutorial" class="screen">
+  <div class="tutorial-wrap">
+    <div class="tutorial-slides">
+      <div class="t-slide active" data-slide="0">
+        <div class="t-emoji">📡</div>
+        <h2>Price Monitor</h2>
+        <p>Отслеживай цены на товары в реальном времени. Узнай, когда лучше покупать.</p>
+      </div>
+      <div class="t-slide" data-slide="1">
+        <div class="t-emoji">🔗</div>
+        <h2>Вставь ссылку</h2>
+        <p>Скопируй ссылку с любого маркетплейса — Ozon, Wildberries, Amazon, AliExpress и других.</p>
+      </div>
+      <div class="t-slide" data-slide="2">
+        <div class="t-emoji">📊</div>
+        <h2>Получи аналитику</h2>
+        <p>ИИ проанализирует историю цен, курс доллара и даст рекомендацию — когда покупать.</p>
+      </div>
+      <div class="t-slide" data-slide="3">
+        <div class="t-emoji">👟</div>
+        <h2>Альтернативы</h2>
+        <p>Для одежды и обуви — найдём похожие товары с лучшей ценой на других платформах.</p>
+      </div>
+    </div>
+    <div class="t-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+    <button class="btn-primary" id="tutorial-next">Далее →</button>
+    <button class="btn-ghost" id="tutorial-skip">Пропустить</button>
+  </div>
+</div>
+
+<!-- SCREEN: Categories -->
+<div id="screen-categories" class="screen">
+  <div class="top-bar">
+    <div class="top-logo">◈ Price Monitor</div>
+    <div class="top-user" id="top-username">@user</div>
+  </div>
+  <div class="cats-header">
+    <h1>Выберите категорию<br>для мониторинга</h1>
+    <p class="cats-sub">Вставьте ссылку на товар и получите аналитику</p>
+  </div>
+  <div class="cats-grid">
+    <div class="cat-card" data-cat="товары"><span class="cat-icon">🛒</span><span class="cat-name">Товары</span></div>
+    <div class="cat-card" data-cat="крипта"><span class="cat-icon">₿</span><span class="cat-name">Крипта</span></div>
+    <div class="cat-card" data-cat="электроника"><span class="cat-icon">💻</span><span class="cat-name">Электроника</span></div>
+    <div class="cat-card" data-cat="одежда"><span class="cat-icon">👕</span><span class="cat-name">Одежда</span></div>
+    <div class="cat-card" data-cat="обувь"><span class="cat-icon">👟</span><span class="cat-name">Обувь</span></div>
+    <div class="cat-card" data-cat="косметика"><span class="cat-icon">💄</span><span class="cat-name">Косметика</span></div>
+    <div class="cat-card" data-cat="спорт"><span class="cat-icon">🏋️</span><span class="cat-name">Спорт</span></div>
+    <div class="cat-card" data-cat="еда"><span class="cat-icon">🛍️</span><span class="cat-name">Продукты</span></div>
+    <div class="cat-card" data-cat="авто"><span class="cat-icon">🚗</span><span class="cat-name">Авто</span></div>
+  </div>
+  <div class="url-section">
+    <div class="url-label">Вставьте ссылку на товар</div>
+    <div class="url-input-wrap">
+      <input type="url" id="url-input" placeholder="https://ozon.ru/product/..." autocomplete="off">
+      <button class="url-paste-btn" id="paste-btn" title="Вставить">⎘</button>
+    </div>
+    <button class="btn-primary full" id="analyze-btn">
+      <span class="btn-text">Анализировать</span>
+      <span class="btn-icon">→</span>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: Analyzing -->
+<div id="screen-analyzing" class="screen">
+  <div class="analyzing-wrap">
+    <div class="orbit-loader">
+      <div class="orbit-ring ring1"></div>
+      <div class="orbit-ring ring2"></div>
+      <div class="orbit-ring ring3"></div>
+      <div class="orbit-center">◈</div>
+    </div>
+    <h2 class="analyzing-title">Анализируем товар</h2>
+    <p class="analyzing-steps" id="analyzing-step">Определяем платформу...</p>
+    <div class="analyzing-progress">
+      <div class="ap-fill" id="ap-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: Result -->
+<div id="screen-result" class="screen">
+  <div class="result-scroll">
+    <div class="result-header">
+      <button class="back-btn" id="back-btn">← Назад</button>
+      <span class="result-badge" id="result-platform-badge">OZON</span>
+    </div>
+    <div class="result-hero">
+      <h2 class="result-name" id="result-name">Название товара</h2>
+      <div class="result-cat" id="result-cat">Категория</div>
+    </div>
+    <div class="price-block">
+      <div class="price-main">
+        <span class="price-label">Текущая цена</span>
+        <span class="price-value" id="price-value">0 ₽</span>
+        <span class="price-usd" id="price-usd">≈ $0</span>
+      </div>
+      <div class="price-rec" id="price-rec">
+        <span class="rec-dot"></span>
+        <span class="rec-text" id="rec-text">подождать</span>
+      </div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-title">История цены (6 мес.)</div>
+      <canvas id="price-chart" height="140"></canvas>
+    </div>
+    <div class="forecast-block">
+      <div class="chart-title">Прогноз</div>
+      <div class="forecast-grid">
+        <div class="forecast-card"><span class="fc-label">Через 30 дней</span><span class="fc-value" id="fc-30">—</span></div>
+        <div class="forecast-card"><span class="fc-label">Через 90 дней</span><span class="fc-value" id="fc-90">—</span></div>
+        <div class="forecast-card wide">
+          <span class="fc-label">Шанс снижения цены</span>
+          <div class="drop-bar-wrap">
+            <div class="drop-bar"><div class="drop-fill" id="drop-fill"></div></div>
+            <span class="drop-pct" id="drop-pct">0%</span>
+          </div>
+        </div>
+        <div class="forecast-card wide">
+          <span class="fc-label">Лучшее время для покупки</span>
+          <span class="fc-value" id="best-time">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="analytics-block">
+      <div class="chart-title">Аналитика ИИ</div>
+      <p class="analytics-text" id="analytics-summary"></p>
+      <div class="usd-impact">
+        <span class="usd-icon">$</span>
+        <span id="usd-impact-text"></span>
+      </div>
+    </div>
+    <div class="alts-block" id="alts-block" style="display:none">
+      <div class="chart-title">Похожие товары</div>
+      <div class="alts-list" id="alts-list"></div>
+    </div>
+    <div class="result-footer">
+      <button class="btn-primary full" id="new-search-btn">🔍 Новый поиск</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
