@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Crypto Space</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- SCREEN: Loading -->
+<div id="screen-loading" class="screen active">
+  <div class="loader-wrap">
+    <div class="logo-mark">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">CRYPTO<br>SPACE</span>
+    </div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+    <p class="loader-hint" id="load-status">Загрузка...</p>
+  </div>
+</div>
+
+<!-- SCREEN: Tutorial -->
+<div id="screen-tutorial" class="screen">
+  <div class="tutorial-wrap">
+    <div class="tutorial-slides">
+
+      <div class="tut-slide active" data-slide="0">
+        <div class="tut-visual">
+          <svg viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="80" width="200" height="60" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.2)" stroke-width="1"/>
+            <polyline points="20,120 55,95 90,110 125,75 160,88 200,60" stroke="#F5C518" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="200" cy="60" r="5" fill="#F5C518"/>
+            <text x="14" y="30" font-family="JetBrains Mono,monospace" font-weight="700" font-size="20" fill="#F0EFE8">$67,240</text>
+            <text x="14" y="50" font-family="DM Sans,sans-serif" font-size="12" fill="#22C55E">+2.4% за 24ч</text>
+            <rect x="148" y="14" width="60" height="22" rx="6" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.3)" stroke-width="1"/>
+            <text x="178" y="29" font-family="DM Sans,sans-serif" font-size="11" fill="#22C55E" text-anchor="middle">LIVE</text>
+          </svg>
+        </div>
+        <h2>Crypto Space</h2>
+        <p>Мониторинг криптовалют и форекс в реальном времени. Живые цены с ведущих бирж мира.</p>
+      </div>
+
+      <div class="tut-slide" data-slide="1">
+        <div class="tut-visual">
+          <svg viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="10" width="90" height="60" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.25)" stroke-width="1"/>
+            <text x="55" y="34" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F5C518" text-anchor="middle">BINANCE</text>
+            <text x="55" y="52" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780" text-anchor="middle">Крипта</text>
+            <rect x="120" y="10" width="90" height="60" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.25)" stroke-width="1"/>
+            <text x="165" y="34" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F5C518" text-anchor="middle">BYBIT</text>
+            <text x="165" y="52" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780" text-anchor="middle">Spot & Futures</text>
+            <rect x="10" y="90" width="90" height="60" rx="12" fill="#F5C518"/>
+            <text x="55" y="115" font-family="Syne,sans-serif" font-size="11" font-weight="800" fill="#0D0D0E" text-anchor="middle">OKX</text>
+            <text x="55" y="133" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(13,13,14,0.6)" text-anchor="middle">Выбрана</text>
+            <rect x="120" y="90" width="90" height="60" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.25)" stroke-width="1"/>
+            <text x="165" y="115" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F5C518" text-anchor="middle">KUCOIN</text>
+            <text x="165" y="133" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780" text-anchor="middle">Altcoins</text>
+          </svg>
+        </div>
+        <h2>9 ведущих бирж</h2>
+        <p>Выбери биржу — Binance, Bybit, OKX, KuCoin, Coinbase и другие. Список монет загружается прямо с биржи.</p>
+      </div>
+
+      <div class="tut-slide" data-slide="2">
+        <div class="tut-visual">
+          <svg viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="10" width="200" height="50" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.2)" stroke-width="1"/>
+            <text x="26" y="42" font-family="JetBrains Mono,monospace" font-size="22" font-weight="700" fill="#F5C518">EUR/USD</text>
+            <text x="160" y="30" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780">Курс</text>
+            <text x="160" y="46" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#F0EFE8">1.0842</text>
+            <rect x="10" y="74" width="200" height="36" rx="10" fill="#141416" stroke="rgba(245,197,24,0.12)" stroke-width="1"/>
+            <text x="20" y="96" font-family="DM Sans,sans-serif" font-size="12" fill="#8A8780">Поиск валюты...</text>
+            <rect x="10" y="120" width="90" height="32" rx="8" fill="#1C1C1F" stroke="rgba(245,197,24,0.2)" stroke-width="1"/>
+            <text x="55" y="140" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F0EFE8" text-anchor="middle">USD</text>
+            <rect x="120" y="120" width="90" height="32" rx="8" fill="#1C1C1F" stroke="rgba(245,197,24,0.2)" stroke-width="1"/>
+            <text x="165" y="140" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="#F0EFE8" text-anchor="middle">UAH</text>
+          </svg>
+        </div>
+        <h2>Форекс в реальном времени</h2>
+        <p>25+ валют с живыми курсами. Ищи любую валюту — USD, EUR, UAH и другие.</p>
+      </div>
+
+      <div class="tut-slide" data-slide="3">
+        <div class="tut-visual">
+          <svg viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="8" width="200" height="50" rx="12" fill="#1C1C1F" stroke="rgba(245,197,24,0.2)" stroke-width="1"/>
+            <text x="20" y="26" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780">АНАЛИТИКА</text>
+            <text x="20" y="46" font-family="DM Sans,sans-serif" font-size="11" fill="#F0EFE8">Рекомендую накапливать — цена</text>
+            <text x="20" y="60" font-family="DM Sans,sans-serif" font-size="11" fill="#F0EFE8">у сильного уровня поддержки.</text>
+            <polyline points="14,120 40,108 65,115 90,92 115,100 140,82 166,90 200,70" stroke="#F5C518" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="200" cy="70" r="4" fill="#F5C518"/>
+            <rect x="148" y="134" width="60" height="18" rx="5" fill="rgba(245,197,24,0.12)" stroke="rgba(245,197,24,0.3)" stroke-width="1"/>
+            <text x="178" y="147" font-family="JetBrains Mono,monospace" font-size="10" fill="#F5C518" text-anchor="middle">+2.4%</text>
+          </svg>
+        </div>
+        <h2>Аналитика и уведомления</h2>
+        <p>График 7 дней, обзор актива, прогноз. Бот напишет при любом изменении цены на выбранный процент.</p>
+      </div>
+
+    </div>
+    <div class="t-dots" id="tut-dots">
+      <span class="dot active"></span><span class="dot"></span>
+      <span class="dot"></span><span class="dot"></span>
+    </div>
+    <button class="btn-primary" id="tut-next">Далее</button>
+    <button class="btn-ghost" id="tut-skip">Пропустить</button>
+  </div>
+</div>
+
+<!-- SCREEN: Exchange -->
+<div id="screen-exchange" class="screen">
+  <div class="top-bar">
+    <div class="top-logo">◈ Crypto Space</div>
+    <div class="top-user" id="top-username">@user</div>
+  </div>
+  <div class="page-scroll">
+    <div class="section-header">
+      <h1 class="section-title">Выбери биржу</h1>
+      <p class="section-sub">Монеты загружаются прямо с выбранной биржи</p>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="exchange-search" placeholder="Найти биржу..." autocomplete="off" />
+    </div>
+    <div class="cards-col" id="exchange-cards"></div>
+    <div class="action-bar">
+      <button class="btn-primary full" id="exchange-next" disabled>
+        <span class="btn-text">Продолжить</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: Coin -->
+<div id="screen-coin" class="screen">
+  <div class="top-bar">
+    <button class="top-back" id="coin-back">← Назад</button>
+    <div class="top-logo">◈ Crypto Space</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="page-scroll">
+    <div class="section-header">
+      <h1 class="section-title">Выбери монету</h1>
+      <p class="section-sub" id="coin-sub">Топ-20 по объёму — поиск по всем</p>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="coin-search" placeholder="BTC, ETH, SOL..." autocomplete="off" />
+    </div>
+    <div class="cards-col" id="coin-cards">
+      <div class="loading-coins">Загружаем монеты с биржи...</div>
+    </div>
+    <div class="alert-row">
+      <span class="alert-label">Уведомить при изменении</span>
+      <div class="pct-ctrl">
+        <button class="pct-btn" id="pct-minus">−</button>
+        <span class="pct-val" id="pct-val">5</span><span class="pct-sign">%</span>
+        <button class="pct-btn" id="pct-plus">+</button>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-primary full" id="coin-next" disabled>
+        <span class="btn-text">Запустить мониторинг</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: Forex -->
+<div id="screen-forex" class="screen">
+  <div class="top-bar">
+    <button class="top-back" id="forex-back">← Назад</button>
+    <div class="top-logo">◈ Валюты</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="page-scroll">
+    <div class="section-header">
+      <h1 class="section-title">Выбери валюту</h1>
+      <p class="section-sub">Курс к USD — поиск по коду или названию</p>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="forex-search" placeholder="EUR, UAH, GBP..." autocomplete="off" />
+    </div>
+    <div class="cards-col" id="forex-cards"></div>
+    <div class="alert-row">
+      <span class="alert-label">Уведомить при изменении</span>
+      <div class="pct-ctrl">
+        <button class="pct-btn" id="forex-pct-minus">−</button>
+        <span class="pct-val" id="forex-pct-val">1</span><span class="pct-sign">%</span>
+        <button class="pct-btn" id="forex-pct-plus">+</button>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn-primary full" id="forex-next" disabled>
+        <span class="btn-text">Запустить мониторинг</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: Analyzing -->
+<div id="screen-analyzing" class="screen">
+  <div class="analyzing-wrap">
+    <div class="orbit-loader">
+      <div class="orbit-ring ring1"></div>
+      <div class="orbit-ring ring2"></div>
+      <div class="orbit-ring ring3"></div>
+      <div class="orbit-center" id="orb-core">◈</div>
+    </div>
+    <h2 class="analyzing-title" id="an-title">Загружаем</h2>
+    <p class="analyzing-steps" id="an-step">Подключаемся...</p>
+    <div class="analyzing-progress">
+      <div class="ap-fill" id="an-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: Result -->
+<div id="screen-result" class="screen">
+  <div class="result-scroll">
+    <div class="result-header">
+      <button class="back-btn" id="res-back">← Назад</button>
+      <span class="result-badge" id="res-sym-badge">BTC</span>
+    </div>
+
+    <div class="result-hero">
+      <div class="rh-left">
+        <div class="rh-exch-tag" id="res-exch-tag">BINANCE</div>
+        <h2 class="result-name" id="ph-name">Bitcoin</h2>
+        <p class="result-desc" id="ph-desc"></p>
+      </div>
+      <div class="rh-price-pill">
+        <span class="rh-price mono" id="ph-price">$0</span>
+        <span class="rh-chg mono" id="ph-chg">0%</span>
+      </div>
+    </div>
+
+    <!-- График -->
+    <div class="chart-block">
+      <div class="chart-title-row">
+        <span class="chart-title">График 7 дней</span>
+        <span class="chart-chg7 mono" id="chg7-label"></span>
+      </div>
+      <canvas id="price-chart" height="130"></canvas>
+    </div>
+
+    <!-- Изменение -->
+    <div class="change-block" id="change-block">
+      <div class="change-icon" id="change-icon">↑</div>
+      <div class="change-info">
+        <span class="change-label">Изменение за 24ч</span>
+        <span class="change-val mono" id="change-val">+0.00%</span>
+      </div>
+      <div class="change-abs mono" id="change-abs">$0</div>
+    </div>
+
+    <!-- Прогноз -->
+    <div class="forecast-block">
+      <div class="chart-title">Прогноз тренда</div>
+      <div class="forecast-grid">
+        <div class="forecast-card">
+          <span class="fc-label">Через 7 дней</span>
+          <span class="fc-value mono" id="fc-7d">—</span>
+          <span class="fc-dir mono" id="fc-7d-dir"></span>
+        </div>
+        <div class="forecast-card">
+          <span class="fc-label">Через 30 дней</span>
+          <span class="fc-value mono" id="fc-30d">—</span>
+          <span class="fc-dir mono" id="fc-30d-dir"></span>
+        </div>
+        <div class="forecast-card wide">
+          <span class="fc-label">Уверенность</span>
+          <div class="conf-wrap">
+            <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+            <span class="conf-pct mono" id="conf-pct">0%</span>
+          </div>
+        </div>
+        <div class="forecast-card">
+          <span class="fc-label">Поддержка</span>
+          <span class="fc-value sm mono" id="fc-support">—</span>
+        </div>
+        <div class="forecast-card">
+          <span class="fc-label">Сопротивление</span>
+          <span class="fc-value sm mono" id="fc-resist">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Обзор актива -->
+    <div class="ai-block">
+      <div class="ai-block-head">
+        <span class="ai-icon">◈</span>
+        <span class="chart-title">Обзор актива</span>
+        <span class="ai-rec-tag" id="ai-rec-tag">держать</span>
+      </div>
+      <p class="ai-summary" id="ai-summary"></p>
+      <div class="ai-row-grid">
+        <div class="ai-row-card">
+          <span class="ai-row-label">Риски</span>
+          <span class="ai-row-val" id="ai-risks"></span>
+        </div>
+        <div class="ai-row-card">
+          <span class="ai-row-label">Возможности</span>
+          <span class="ai-row-val" id="ai-opp"></span>
+        </div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-pill" id="metric-vol"></div>
+        <div class="metric-pill" id="metric-liq"></div>
+        <div class="metric-pill" id="metric-sent"></div>
+      </div>
+    </div>
+
+<div class="result-footer">
+  <button class="btn-primary full" id="start-alert-btn" style="display: none; margin-bottom: 12px;">
+    Запустить уведомления
+  </button>
+  
+  <button class="btn-primary full" id="new-btn">Новый мониторинг</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
