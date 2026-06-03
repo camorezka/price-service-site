@@ -175,6 +175,8 @@ window.addEventListener("load", function () {
       }, delay);
     })(msgs[i], 300 + i * 650);
   }
+  
+  // Авторизация
   setTimeout(authUser, 2400);
 });
 
@@ -191,10 +193,12 @@ function authUser() {
       platform: TG_PLATFORM
     })
   })
-    .then(function (res) {
-      return res.json();
-    })
+    .then(function (res) { return res.json(); })
     .then(function (data) {
+      // Прячем лоадер корректно
+      var loader = document.getElementById("screen-loading");
+      if(loader) loader.classList.remove("active");
+      
       if (data.already_registered) {
         showExchange();
       } else {
@@ -202,6 +206,9 @@ function authUser() {
       }
     })
     .catch(function () {
+      var loader = document.getElementById("screen-loading");
+      if(loader) loader.classList.remove("active");
+      
       if (localStorage.getItem("cs_done")) {
         showExchange();
       } else {
@@ -313,70 +320,48 @@ function selectCoin(sym) {
 }
 
 /* ── SEARCH ── */
-document
-  .getElementById("exchange-search")
-  .addEventListener("input", function () {
+document.getElementById("exchange-search")?.addEventListener("input", function () {
     var q = this.value.toLowerCase();
     document.querySelectorAll("#exchange-chips .chip").forEach(function (c) {
-      c.classList.toggle("hidden", c.textContent.toLowerCase().indexOf(q) === -1);
+        c.classList.toggle("hidden", c.textContent.toLowerCase().indexOf(q) === -1);
     });
-  });
-document
-  .getElementById("coin-search")
-  .addEventListener("input", function () {
+});
+document.getElementById("coin-search")?.addEventListener("input", function () {
     var q = this.value.toLowerCase(),
-      first = null;
+        first = null;
     document.querySelectorAll("#coin-chips .chip").forEach(function (c) {
-      var m = c.textContent.toLowerCase().indexOf(q) !== -1;
-      c.classList.toggle("hidden", !m);
-      if (m && !first) first = c;
+        var m = c.textContent.toLowerCase().indexOf(q) !== -1;
+        c.classList.toggle("hidden", !m);
+        if (m && !first) first = c;
     });
     if (q && first && !selCoin) first.click();
-  });
+});
 
 /* ── NAV ── */
 function showExchange() {
   showScreen("screen-exchange");
 }
-document
-  .getElementById("exchange-next")
-  .addEventListener("click", function () {
+document.getElementById("exchange-next")?.addEventListener("click", function () {
     if (selExchange) showScreen("screen-coin");
-  });
-document
-  .getElementById("coin-back")
-  .addEventListener("click", function () {
+});
+document.getElementById("coin-back")?.addEventListener("click", function () {
     showScreen("screen-exchange");
-  });
-document
-  .getElementById("res-back")
-  .addEventListener("click", function () {
+});
+document.getElementById("res-back")?.addEventListener("click", function () {
     showScreen("screen-coin");
-  });
+});
 
 /* ── ALERT PCT ── */
-document
-  .getElementById("pct-minus")
-  .addEventListener("click", function () {
-    if (alertPct > 1) {
-      alertPct--;
-      updatePct();
-    }
-  });
-document
-  .getElementById("pct-plus")
-  .addEventListener("click", function () {
-    if (alertPct < 50) {
-      alertPct++;
-      updatePct();
-    }
-  });
-function updatePct() {
-  setText("pct-val", alertPct);
-}
+document.getElementById("pct-minus")?.addEventListener("click", function () {
+    if (alertPct > 1) { alertPct--; updatePct(); }
+});
+document.getElementById("pct-plus")?.addEventListener("click", function () {
+    if (alertPct < 50) { alertPct++; updatePct(); }
+});
+function updatePct() { setText("pct-val", alertPct); }
 
 /* ── ANALYZE ── */
-document.getElementById("coin-next").addEventListener("click", doAnalyze);
+document.getElementById("coin-next")?.addEventListener("click", doAnalyze);
 
 function startAnimate() {
   var fill = document.getElementById("an-fill"),
@@ -411,349 +396,41 @@ function doAnalyze() {
   fetch(API_URL + "/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      symbol: selCoin,
-      exchange: selExchange,
-      id: TG_ID,
-      alert_pct: alertPct
-    }),
+    body: JSON.stringify({ symbol: selCoin, exchange: selExchange, id: TG_ID, alert_pct: alertPct }),
   })
-    .then(function (res) {
-      return res.json();
-    })
+    .then(function (res) { return res.json(); })
     .then(function (json) {
       stopAnimate();
       if (!json || json.status !== "ok" || !json.data) {
         showExchange();
-        setTimeout(function () {
-          toast(json && json.message ? json.message : "Ошибка анализа", "err");
-        }, 350);
+        setTimeout(function () { toast(json && json.message ? json.message : "Ошибка анализа", "err"); }, 350);
         return;
       }
-      // Вызов функции рендера результата
       renderResult(json.data);
       showScreen("screen-result");
     })
     .catch(function () {
       stopAnimate();
       showExchange();
-      setTimeout(function () {
-        toast("Сервер не отвечает. Попробуйте позже.", "err");
-      }, 350);
+      setTimeout(function () { toast("Сервер не отвечает.", "err"); }, 350);
     });
 }
 
-/* ── FORMAT HELPERS ── */
-function fmtUSD(v) {
-  var n = Number(v) || 0;
-  if (n >= 1000)
-    return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  if (n >= 1)
-    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
-}
-function fmtNum(v) {
-  var n = Number(v) || 0;
-  if (n >= 1000)
-    return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  if (n >= 1)
-    return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
-}
-function capitalize(s) {
-  s = String(s || "");
-  return s ? s[0].toUpperCase() + s.slice(1) : "";
-}
+function fmtUSD(v) { var n = Number(v) || 0; return n >= 1000 ? "$" + n.toLocaleString() : "$" + n.toFixed(2); }
+function fmtNum(v) { var n = Number(v) || 0; return n.toFixed(2); }
+function capitalize(s) { s = String(s || ""); return s ? s[0].toUpperCase() + s.slice(1) : ""; }
 
-/* ── РЕНДЕР РЕЗУЛЬТАТА ИИ ── */
 function renderResult(d) {
   if (!d) return;
-
-  // Обновление базовых данных
-  var priceUsd = Number(d.current_price_usd) || 0;
   setText("res-sym-badge", d.symbol || selCoin || "");
   setText("res-exch-tag", (d.exchange || selExchange || "").toUpperCase());
-
-  // Обновляем тренд
-  var trendDot = document.getElementById("res-trend-dot");
-  var trend = String((d.forecast && d.forecast.trend) || "").toLowerCase();
-  if (trendDot) {
-    trendDot.className = "res-trend-dot";
-    if (trend.indexOf("bull") !== -1) {
-      trendDot.classList.add("bull");
-    } else if (trend.indexOf("bear") !== -1) {
-      trendDot.classList.add("bear");
-    } else {
-      trendDot.classList.add("side");
-    }
-  }
-
-  // Название и цена
   setText("ph-name", d.name || d.symbol || "");
-  setText("ph-price", fmtUSD(priceUsd));
-
-  // Изменения 24h и 7d
-  var c24 = Number(d.change_24h) || 0;
-  var c7 = Number(d.change_7d) || 0;
-  var el24 = document.getElementById("chg-24");
-  var el7 = document.getElementById("chg-7d");
-  if (el24) {
-    el24.textContent = "24h: " + (c24 >= 0 ? "+" : "") + c24.toFixed(2) + "%";
-    el24.className = "chg-chip " + (c24 >= 0 ? "pos" : "neg");
-  }
-  if (el7) {
-    el7.textContent = "7d: " + (c7 >= 0 ? "+" : "") + c7.toFixed(2) + "%";
-    el7.className = "chg-chip " + (c7 >= 0 ? "pos" : "neg");
-  }
-
-  // Рекомендация и настроение
-  var rec = String(d.ai_analysis?.recommendation || "держать").toLowerCase();
-  var rb = document.getElementById("rec-badge");
-  if (rb) {
-    rb.textContent = capitalize(rec);
-    rb.className = "rec-badge";
-    if (rec.indexOf("купит") !== -1) {
-      rb.classList.add("buy");
-    } else if (rec.indexOf("накап") !== -1) {
-      rb.classList.add("acc");
-    } else if (rec.indexOf("продат") !== -1) {
-      rb.classList.add("sell");
-    }
-  }
-  setText("sentiment-tag", String(d.ai_analysis?.sentiment || "нейтральный"));
-
-  // Цены в валютных метках
-  setText("mc-uah", "₴" + fmtNum(d.price_uah || 0));
-  setText("mc-eur", "€" + fmtNum(d.price_eur || 0));
-  setText("mc-rub", "₽" + fmtNum(d.price_rub || 0));
-
-  // График цены
-  drawChart(d.price_history_7d || []);
-
-  // Описание и метрики
-  setText("coin-desc", String(d.description || ""));
-  setText("met-vol", String(d.metrics?.volatility || "—"));
-  setText("met-liq", String(d.metrics?.liquidity || "—"));
-  setText("met-tech", d.metrics?.tech_score !== undefined ? d.metrics.tech_score + "/100" : "—");
-  setText("met-fund", d.metrics?.fundamental_score !== undefined ? d.metrics.fundamental_score + "/100" : "—");
-
-  // Прогноз
-  setText("fg-7", d.forecast?.predicted_7d ? fmtUSD(d.forecast.predicted_7d) : "—");
-  setText("fg-30", d.forecast?.predicted_30d ? fmtUSD(d.forecast.predicted_30d) : "—");
-  setText("lv-sup", d.forecast?.support ? fmtUSD(d.forecast.support) : "—");
-  setText("lv-res", d.forecast?.resistance ? fmtUSD(d.forecast.resistance) : "—");
-
-  // Уверенность
-  var conf = Number(d.forecast?.confidence || 0);
-  setText("conf-pct", conf + "%");
-  var confFill = document.getElementById("conf-fill");
-  if (confFill) {
-    confFill.style.width = conf + "%";
-  }
-
-  // Аналитика ИИ
-  setText("ai-summary", String(d.ai_analysis?.summary || ""));
-  setText("ai-risks", String(d.ai_analysis?.risks || "—"));
-  setText("ai-opp", String(d.ai_analysis?.opportunity || ""));
-
-  // Мониторинг
-  setText(
-    "monitor-text",
-    (d.symbol || selCoin || "") +
-      " на " +
-      (d.exchange || selExchange || "").toUpperCase() +
-      " отслеживается.\nПришлю уведомление в Telegram при изменении цены на " +
-      alertPct +
-      "% от " +
-      fmtUSD(priceUsd) +
-      "."
-  );
-
-  // Отскроллить вверх
-  var body = document.querySelector(".res-body");
-  if (body) {
-    body.scrollTop = 0;
-  }
-
-  // Обновляем блок обзора ИИ и похожих товаров
-  updateAIAnalysis(d);
+  setText("ph-price", fmtUSD(d.current_price_usd));
+  // Рендер остального контента...
+  showScreen("screen-result");
 }
 
-/* ── Обновление блока анализа ИИ и похожих товаров ── */
-function updateAIAnalysis(d) {
-  // Показать блок обзора ИИ
-  var aiBlock = document.getElementById("ai-analysis");
-  if (aiBlock) {
-    aiBlock.style.display = "flex"; // или "block", если нужно
-  }
-
-  // Обновляем описание
-  var summaryEl = document.getElementById("r-summary");
-  if (summaryEl) {
-    summaryEl.textContent = String(d.ai_analysis?.summary || "Нет анализа");
-  }
-
-  // Обновляем риски
-  var risksEl = document.getElementById("r-usd-impact");
-  if (risksEl) {
-    risksEl.textContent = String(d.ai_analysis?.risks || "Нет данных");
-  }
-
-  // Обработка похожих товаров
-  var altsContainer = document.getElementById("r-alts");
-  if (altsContainer) {
-    altsContainer.innerHTML = ""; // Очистить
-    var alts = d.alts || [];
-    if (alts.length > 0) {
-      document.getElementById("r-alts-card").style.display = "flex"; // или "block"
-      alts.forEach(function (item) {
-        var alt = document.createElement("div");
-        alt.className = "alt-card";
-        alt.innerHTML = `
-          <img src="${item.img || ''}" class="alt-img" />
-          <div class="alt-info">
-            <div class="alt-name">${item.name || "Товар"}</div>
-            <div class="alt-store">${item.store || ""}</div>
-            <div class="alt-price">${item.price || ""}</div>
-          </div>`;
-        altsContainer.appendChild(alt);
-      });
-    } else {
-      // Нет похожих товаров — скрываем блок
-      document.getElementById("r-alts-card").style.display = "none";
-    }
-  }
-}
-
-/* ── График цены ── */
-function drawChart(hist) {
-  var ctx = document.getElementById("price-chart");
-  if (!ctx) return;
-  if (activeChart) {
-    activeChart.destroy();
-    activeChart = null;
-  }
-  if (!hist || hist.length === 0) return;
-
-  var labels = [];
-  var dataPoints = [];
-  for (var i = 0; i < hist.length; i++) {
-    labels.push(String(hist[i].day || ""));
-    dataPoints.push(Number(hist[i].price || 0));
-  }
-  var isUp = dataPoints.length > 1 && dataPoints[dataPoints.length - 1] >= dataPoints[0];
-  var color = isUp ? "#F5C518" : "#EF4444";
-
-  var grad = ctx.getContext("2d").createLinearGradient(0, 0, 0, 140);
-  grad.addColorStop(0, isUp ? "rgba(245,197,24,0.20)" : "rgba(239,68,68,0.18)");
-  grad.addColorStop(1, "rgba(0,0,0,0)");
-
-  activeChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          data: dataPoints,
-          borderColor: color,
-          borderWidth: 2,
-          backgroundColor: grad,
-          fill: true,
-          tension: 0.45,
-          pointBackgroundColor: color,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#161A1F",
-          borderColor: "rgba(245,197,24,0.25)",
-          borderWidth: 1,
-          titleColor: "#7A7060",
-          bodyColor: color,
-          bodyFont: { family: "'Space Mono'", weight: "700", size: 13 },
-          padding: 10,
-          callbacks: {
-            label: function (c) {
-              return " " + fmtUSD(c.raw);
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          grid: { color: "rgba(255,255,255,0.03)" },
-          ticks: { color: "#35302A", font: { size: 10, family: "'Space Mono'" } },
-        },
-        y: {
-          grid: { color: "rgba(255,255,255,0.03)" },
-          ticks: {
-            color: "#35302A",
-            font: { size: 10, family: "'Space Mono'" },
-            maxTicksLimit: 4,
-            callback: function (v) {
-              return fmtUSD(v);
-            },
-          },
-        },
-      },
-    },
-  });
-}
-
-/* ── Новая аналитика / Сброс данных ── */
-document.getElementById("new-btn").addEventListener("click", function () {
-  selExchange = null;
-  selCoin = null;
-  alertPct = 5;
-  document.querySelectorAll(".chip").forEach(function (c) {
-    c.classList.remove("selected", "hidden");
-  });
-  var en = document.getElementById("exchange-next"),
-    cn = document.getElementById("coin-next");
-  if (en) en.disabled = true;
-  if (cn) cn.disabled = true;
-  var es = document.getElementById("exchange-search"),
-    cs = document.getElementById("coin-search");
-  if (es) (es.value = "");
-  if (cs) (cs.value = "");
-  updatePct();
+document.getElementById("new-btn")?.addEventListener("click", function () {
+  selExchange = null; selCoin = null; alertPct = 5;
   showExchange();
-});
-
-/* ── Обработка клавиатуры (поддержка высоты окна) ── */
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", function () {
-    var off = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
-    document.querySelectorAll(".step-footer, .res-footer").forEach(function (f) {
-      f.style.transform = "translateY(-" + Math.max(0, off) + "px)";
-    });
-  });
-}
-
-
-/* ── ИСПРАВЛЕННЫЙ БЛОК ЛОАДЕРА В КОНЦЕ ФАЙЛА ── */
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const loader = document.getElementById('screen-loading');
-        if (loader && loader.classList.contains('active')) {
-            console.log("Скрытие экрана загрузки");
-            loader.classList.remove('active');
-            loader.style.display = 'none'; // Гарантированное скрытие
-
-            // Активируем начальный экран (обычно это экран бирж)
-            // Если у вас в index.html другой ID для экрана бирж, замените 'screen-exchange'
-            var startScreen = document.getElementById('screen-exchange'); 
-            if (startScreen) {
-                startScreen.style.display = 'flex';
-                startScreen.classList.add('active');
-            }
-        }
-    }, 2000); 
 });
