@@ -353,3 +353,32 @@ html, body {
 }
 .cc-chg.green { color: #22C55E; }
 .cc-chg.red   { color: #EF4444; }
+
+
+/* Блокировка ПК */
+@media (min-width: 768px) {
+  body::before {
+    content: "Пожалуйста, используйте мобильное устройство";
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
+}
+
+/* Эффект кнопок iOS */
+.btn-action {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease, opacity 0.15s;
+}
+
+.btn-action:active {
+  transform: scale(0.95);
+  opacity: 0.7;
+}
