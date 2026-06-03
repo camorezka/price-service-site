@@ -253,6 +253,43 @@ function selectCoin(sym) {
   var btn = document.getElementById("coin-next");
   if (btn) btn.disabled = false;
 }
+
+
+
+
+=function onCoinSelected(coin) {
+  selCoin = coin;
+  
+  const alertBtn = document.getElementById("start-alert-btn");
+  alertBtn.style.display = "block"; 
+  
+  alertBtn.onclick = async () => {
+ =
+    try {
+      const response = await fetch(`${API_URL}/activate-monitor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tg_id: TG_ID,
+          symbol: selCoin.sym,
+          exchange: selExchange.id
+        })
+      });
+      
+      const res = await response.json();
+      if (res.status === "ok") {
+        alert("Уведомления запущены на 7 дней!");
+        alertBtn.style.display = "none"; // Скрываем после успеха
+      } else {
+        alert("Ошибка: " + res.message);
+      }
+    } catch (err) {
+      alert("Сервер недоступен");
+    }
+  };
+}
+
+
 function selectForex(code) {
   selForex = code;
   document.querySelectorAll(".forex-card").forEach(function(c) { c.classList.toggle("selected", c.dataset.code === code); });
