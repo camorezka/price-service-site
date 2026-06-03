@@ -2,298 +2,176 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-<meta name="theme-color" content="#0A0A0B"/>
-<title>Monitor Space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Price Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<canvas id="pixel-canvas"></canvas>
-
-<!-- LOADING -->
+<!-- SCREEN: Loading -->
 <div id="screen-loading" class="screen active">
-  <div class="loading-center">
-    <div class="brand-logo">
-      <div class="brand-icon">
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-          <rect x="2" y="2" width="14" height="14" rx="3" fill="#F5C518"/>
-          <rect x="20" y="2" width="14" height="14" rx="3" fill="#F5C518" opacity="0.5"/>
-          <rect x="2" y="20" width="14" height="14" rx="3" fill="#F5C518" opacity="0.5"/>
-          <rect x="20" y="20" width="14" height="14" rx="3" fill="#F5C518"/>
-        </svg>
-      </div>
-      <div class="brand-name">Monitor<span>Space</span></div>
+  <div class="loader-wrap">
+    <div class="logo-mark">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">PRICE<br>MONITOR</span>
     </div>
-    <div class="loading-bar-wrap">
-      <div class="loading-bar-fill" id="load-fill"></div>
-    </div>
-    <p class="loading-status" id="load-status">Инициализация...</p>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+    <p class="loader-hint">Загрузка...</p>
   </div>
 </div>
 
-<!-- TUTORIAL -->
+<!-- SCREEN: Tutorial -->
 <div id="screen-tutorial" class="screen">
-  <div class="tut-container">
-    <div class="tut-slides-wrap">
-      <div class="tut-slide active">
-        <div class="tut-icon-ring"><span class="tut-emoji">🛰️</span></div>
-        <h2>Crypto Space</h2>
-        <p>Мониторинг крипты с ИИ-аналитикой и уведомлениями в Telegram</p>
+  <div class="tutorial-wrap">
+    <div class="tutorial-slides">
+      <div class="t-slide active" data-slide="0">
+        <div class="t-emoji">📡</div>
+        <h2>Price Monitor</h2>
+        <p>Отслеживай цены на товары в реальном времени. Узнай, когда лучше покупать.</p>
       </div>
-      <div class="tut-slide">
-        <div class="tut-icon-ring"><span class="tut-emoji">🏦</span></div>
-        <h2>Выбери биржу</h2>
-        <p>Binance, Bybit, OKX, Coinbase и другие — актуальные данные с реальных бирж</p>
+      <div class="t-slide" data-slide="1">
+        <div class="t-emoji">🔗</div>
+        <h2>Вставь ссылку</h2>
+        <p>Скопируй ссылку с любого маркетплейса — Ozon, Wildberries, Amazon, AliExpress и других.</p>
       </div>
-      <div class="tut-slide">
-        <div class="tut-icon-ring"><span class="tut-emoji">📡</span></div>
-        <h2>Следи за ценой</h2>
-        <p>Курс в гривнах, евро, рублях — плюс прогноз от ИИ на 7 и 30 дней</p>
+      <div class="t-slide" data-slide="2">
+        <div class="t-emoji">📊</div>
+        <h2>Получи аналитику</h2>
+        <p>ИИ проанализирует историю цен, курс доллара и даст рекомендацию — когда покупать.</p>
       </div>
-      <div class="tut-slide">
-        <div class="tut-icon-ring"><span class="tut-emoji">🔔</span></div>
-        <h2>Уведомления</h2>
-        <p>Когда цена изменится на заданный процент — придёт уведомление в Telegram</p>
+      <div class="t-slide" data-slide="3">
+        <div class="t-emoji">👟</div>
+        <h2>Альтернативы</h2>
+        <p>Для одежды и обуви — найдём похожие товары с лучшей ценой на других платформах.</p>
       </div>
     </div>
-    <div class="tut-dots" id="tut-dots"></div>
-    <div class="tut-actions">
-      <button id="tut-next" class="btn-primary">Далее</button>
-      <button id="tut-skip" class="btn-ghost">Пропустить</button>
+    <div class="t-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
     </div>
+    <button class="btn-primary" id="tutorial-next">Далее →</button>
+    <button class="btn-ghost" id="tutorial-skip">Пропустить</button>
   </div>
 </div>
 
-<!-- STEP 1: ВЫБОР БИРЖИ -->
-<div id="screen-exchange" class="screen">
-  <div class="step-header">
-    <div class="step-logo">Crypto<span>Space</span></div>
-    <div class="step-indicator">
-      <span class="si active"></span><span class="si"></span>
-    </div>
+<!-- SCREEN: Categories -->
+<div id="screen-categories" class="screen">
+  <div class="top-bar">
+    <div class="top-logo">◈ Price Monitor</div>
+    <div class="top-user" id="top-username">@user</div>
   </div>
-  <div class="step-body">
-    <div class="step-title">
-      <div class="step-num">01</div>
-      <div>
-        <h2>Выбери биржу</h2>
-        <p>Откуда брать цену</p>
-      </div>
-    </div>
-    <div class="search-field">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input type="text" id="exchange-search" placeholder="Поиск биржи..." autocomplete="off" />
-    </div>
-    <div class="chips-grid" id="exchange-chips"></div>
+  <div class="cats-header">
+    <h1>Выберите категорию<br>для мониторинга</h1>
+    <p class="cats-sub">Вставьте ссылку на товар и получите аналитику</p>
   </div>
-  <div class="step-footer">
-    <button class="btn-next" id="exchange-next" disabled>Далее →</button>
+  <div class="cats-grid">
+    <div class="cat-card" data-cat="товары"><span class="cat-icon">🛒</span><span class="cat-name">Товары</span></div>
+    <div class="cat-card" data-cat="крипта"><span class="cat-icon">₿</span><span class="cat-name">Крипта</span></div>
+    <div class="cat-card" data-cat="электроника"><span class="cat-icon">💻</span><span class="cat-name">Электроника</span></div>
+    <div class="cat-card" data-cat="одежда"><span class="cat-icon">👕</span><span class="cat-name">Одежда</span></div>
+    <div class="cat-card" data-cat="обувь"><span class="cat-icon">👟</span><span class="cat-name">Обувь</span></div>
+    <div class="cat-card" data-cat="косметика"><span class="cat-icon">💄</span><span class="cat-name">Косметика</span></div>
+    <div class="cat-card" data-cat="спорт"><span class="cat-icon">🏋️</span><span class="cat-name">Спорт</span></div>
+    <div class="cat-card" data-cat="еда"><span class="cat-icon">🛍️</span><span class="cat-name">Продукты</span></div>
+    <div class="cat-card" data-cat="авто"><span class="cat-icon">🚗</span><span class="cat-name">Авто</span></div>
   </div>
-</div>
-
-<!-- STEP 2: ВЫБОР МОНЕТЫ -->
-<div id="screen-coin" class="screen">
-  <div class="step-header">
-    <button class="back-icon" id="coin-back">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
+  <div class="url-section">
+    <div class="url-label">Вставьте ссылку на товар</div>
+    <div class="url-input-wrap">
+      <input type="url" id="url-input" placeholder="https://ozon.ru/product/..." autocomplete="off" />
+      <button class="url-paste-btn" id="paste-btn" title="Вставить">⎘</button>
+    </div>
+    <button class="btn-primary full" id="analyze-btn">
+      <span class="btn-text">Анализировать</span>
+      <span class="btn-icon">→</span>
     </button>
-    <div class="step-logo">Crypto<span>Space</span></div>
-    <div class="step-indicator">
-      <span class="si done"></span><span class="si active"></span>
-    </div>
-  </div>
-  <div class="step-body">
-    <div class="step-title">
-      <div class="step-num">02</div>
-      <div>
-        <h2>Выбери монету</h2>
-        <p>Какую валюту мониторим</p>
-      </div>
-    </div>
-    <div class="search-field">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input type="text" id="coin-search" placeholder="Символ или название..." autocomplete="off" />
-    </div>
-    <div class="chips-grid" id="coin-chips"></div>
-    <div class="alert-row">
-      <div class="alert-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        Уведомление при изменении
-      </div>
-      <div class="alert-pct-wrap">
-        <button class="pct-btn" id="pct-minus">−</button>
-        <span id="pct-val">5</span><span class="pct-sign">%</span>
-        <button class="pct-btn" id="pct-plus">+</button>
-      </div>
-    </div>
-  </div>
-  <div class="step-footer">
-    <button class="btn-next" id="coin-next" disabled>Анализировать</button>
   </div>
 </div>
 
-<!-- ЭКЗАНИРОВАНИЕ -->
+<!-- SCREEN: Analyzing -->
 <div id="screen-analyzing" class="screen">
   <div class="analyzing-wrap">
-    <div class="orb-ring r3"></div>
-    <div class="orb-ring r2"></div>
-    <div class="orb-ring r1"></div>
-    <div class="orb-core" id="orb-core">₿</div>
-    <h2 class="an-title">Анализируем</h2>
-    <p class="an-sub" id="an-step">Подключаемся к бирже...</p>
-    <div class="an-bar">
-      <div class="an-fill" id="an-fill"></div>
+    <div class="orbit-loader">
+      <div class="orbit-ring ring1"></div>
+      <div class="orbit-ring ring2"></div>
+      <div class="orbit-ring ring3"></div>
+      <div class="orbit-center">◈</div>
+    </div>
+    <h2 class="analyzing-title">Анализируем товар</h2>
+    <p class="analyzing-steps" id="analyzing-step">Определяем платформу...</p>
+    <div class="analyzing-progress">
+      <div class="ap-fill" id="ap-fill"></div>
     </div>
   </div>
 </div>
 
-<!-- РЕЗУЛЬТАТ -->
+<!-- SCREEN: Result -->
 <div id="screen-result" class="screen">
-  <div class="res-wrap">
-    <div class="res-topbar">
-      <button class="back-icon" id="res-back">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-      </button>
-      <div class="res-coin-id">
-        <div class="res-sym-badge" id="res-sym-badge">BTC</div>
-        <div class="res-exch-tag" id="res-exch-tag">BINANCE</div>
-      </div>
-      <div class="res-trend-dot" id="res-trend-dot"></div>
+  <div class="result-scroll">
+    <div class="result-header">
+      <button class="back-btn" id="back-btn">← Назад</button>
+      <span class="result-badge" id="result-platform-badge">OZON</span>
     </div>
-    <div class="res-body">
-      <div class="price-hero">
-        <div class="ph-left">
-          <div class="ph-name" id="ph-name">Bitcoin</div>
-          <div class="ph-price" id="ph-price">$0</div>
-          <div class="ph-changes">
-            <span class="chg-chip" id="chg-24">24h: —</span>
-            <span class="chg-chip" id="chg-7d">7d: —</span>
-          </div>
-        </div>
-        <div class="ph-right">
-          <div class="rec-badge" id="rec-badge">держать</div>
-          <div class="sentiment-tag" id="sentiment-tag">нейтральный</div>
-        </div>
+    <div class="result-hero">
+      <h2 class="result-name" id="result-name">Название товара</h2>
+      <div class="result-cat" id="result-cat">Категория</div>
+    </div>
+    <div class="price-block">
+      <div class="price-main">
+        <span class="price-label">Текущая цена</span>
+        <span class="price-value" id="price-value">0 ₽</span>
+        <span class="price-usd" id="price-usd">≈ $0</span>
       </div>
-      <!-- график -->
-      <div class="r-card">
-        <div class="r-card-title">График · 7 дней</div>
-        <div class="chart-wrap">
-          <canvas id="price-chart"></canvas>
-        </div>
-      </div>
-      <!-- описание -->
-      <div class="r-card">
-        <div class="r-card-title">О монете</div>
-        <p class="coin-desc" id="coin-desc"></p>
-        <div class="metrics-row">
-          <div class="met-cell">
-            <div class="met-lbl">Волатильность</div>
-            <div class="met-val" id="met-vol">—</div>
-          </div>
-          <div class="met-cell">
-            <div class="met-lbl">Ликвидность</div>
-            <div class="met-val" id="met-liq">—</div>
-          </div>
-          <div class="met-cell">
-            <div class="met-lbl">Тех. оценка</div>
-            <div class="met-val" id="met-tech">—</div>
-          </div>
-          <div class="met-cell">
-            <div class="met-lbl">Фунд. оценка</div>
-            <div class="met-val" id="met-fund">—</div>
-          </div>
-        </div>
-      </div>
-      <!-- прогноз -->
-      <div class="r-card">
-        <div class="r-card-title">Прогноз</div>
-        <div class="forecast-grid">
-          <div class="fg-cell">
-            <div class="fg-lbl">Через 7 дней</div>
-            <div class="fg-val" id="fg-7">—</div>
-          </div>
-          <div class="fg-cell">
-            <div class="fg-lbl">Через 30 дней</div>
-            <div class="fg-val" id="fg-30">—</div>
-          </div>
-        </div>
-        <div class="levels-row">
-          <div class="level-cell support">
-            <div class="lv-lbl">Поддержка</div>
-            <div class="lv-val" id="lv-sup">—</div>
-          </div>
-          <div class="level-cell resistance">
-            <div class="lv-lbl">Сопротивление</div>
-            <div class="lv-val" id="lv-res">—</div>
-          </div>
-        </div>
-        <div class="confidence-row">
-          <div class="conf-lbl">Уверенность прогноза</div>
-          <div class="conf-bar-wrap">
-            <div class="conf-bar">
-              <div class="conf-fill" id="conf-fill"></div>
-            </div>
-            <div class="conf-pct" id="conf-pct">0%</div>
-          </div>
-        </div>
-      </div>
-      <!-- Анализ ИИ -->
-      <div class="r-card ai-card">
-        <div class="r-card-hd">
-          <span class="r-card-title">Анализ ИИ</span>
-          <span class="ai-badge">AI</span>
-        </div>
-        <p class="ai-summary" id="ai-summary"></p>
-        <div class="ai-grid">
-          <div class="ai-cell risk">
-            <div class="ai-cell-icon">⚠️</div>
-            <div>
-              <div class="ai-cell-lbl">Риски</div>
-              <div class="ai-cell-val" id="ai-risks"></div>
-            </div>
-          </div>
-          <div class="ai-cell opp">
-            <div class="ai-cell-icon">💡</div>
-            <div>
-              <div class="ai-cell-lbl">Возможности</div>
-              <div class="ai-cell-val" id="ai-opp"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Мониторинг -->
-      <div class="r-card monitor-card">
-        <div class="r-card-hd">
-          <span class="r-card-title">Мониторинг</span>
-          <span class="monitor-active">● Активен</span>
-        </div>
-        <p class="monitor-text" id="monitor-text"></p>
+      <div class="price-rec" id="price-rec">
+        <span class="rec-dot"></span>
+        <span class="rec-text" id="rec-text">подождать</span>
       </div>
     </div>
-    <div class="res-footer">
-      <button class="btn-new" id="new-btn">Новый запрос</button>
+    <div class="chart-block">
+      <div class="chart-title">История цены (6 мес.)</div>
+      <canvas id="price-chart" height="140"></canvas>
+    </div>
+    <div class="forecast-block">
+      <div class="chart-title">Прогноз</div>
+      <div class="forecast-grid">
+        <div class="forecast-card"><span class="fc-label">Через 30 дней</span><span class="fc-value" id="fc-30">—</span></div>
+        <div class="forecast-card"><span class="fc-label">Через 90 дней</span><span class="fc-value" id="fc-90">—</span></div>
+        <div class="forecast-card wide">
+          <span class="fc-label">Шанс снижения цены</span>
+          <div class="drop-bar-wrap">
+            <div class="drop-bar"><div class="drop-fill" id="drop-fill"></div></div>
+            <span class="drop-pct" id="drop-pct">0%</span>
+          </div>
+        </div>
+        <div class="forecast-card wide">
+          <span class="fc-label">Лучшее время для покупки</span>
+          <span class="fc-value" id="best-time">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="analytics-block">
+      <div class="chart-title">Аналитика ИИ</div>
+      <p class="analytics-text" id="analytics-summary"></p>
+      <div class="usd-impact">
+        <span class="usd-icon">$</span>
+        <span id="usd-impact-text"></span>
+      </div>
+    </div>
+    <div class="alts-block" id="alts-block" style="display:none">
+      <div class="chart-title">Похожие товары</div>
+      <div class="alts-list" id="alts-list"></div>
+    </div>
+    <div class="result-footer">
+      <button class="btn-primary full" id="new-search-btn">🔍 Новый поиск</button>
     </div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="script.js"></script>
