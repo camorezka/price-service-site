@@ -124,54 +124,36 @@ window.addEventListener("load", function() {
   }
 });
 
-// Функция проверки доступа и авторизации
 function authUser() {
-    // 1. ПРОВЕРКА: Если нет Telegram WebApp, блокируем доступ (ПК)
-    if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
-        document.body.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; text-align:center; padding:20px;">
-                <h2>Доступ ограничен</h2>
-                <p>Пожалуйста, откройте приложение через мобильный клиент Telegram.</p>
-            </div>
-        `;
+    // Если WebApp не инициализирован, сразу выходим
+    if (!window.Telegram || !window.Telegram.WebApp) {
+        showScreen("screen-exchange");
         return;
     }
 
-    // 2. ЛОГИКА ЗАГРУЗКИ: Добавляем таймаут, чтобы не висеть вечно
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); 
+    const timer = setTimeout(() => controller.abort(), 7000); // 7 секунд и отмена
 
     fetch(API_URL + "/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: TG_ID,
-            username: TG_NAME,
-            first_name: TG_FIRST,
-            last_name: TG_LAST,
-            lang: TG_LANG
-        }),
+        body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST, last_name: TG_LAST, lang: TG_LANG }),
         signal: controller.signal
     })
-    .then(response => {
-        if (!response.ok) throw new Error("Server error");
-        return response.json();
-    })
+    .then(r => r.json())
     .then(data => {
-        clearTimeout(timeoutId);
+        clearTimeout(timer);
         document.getElementById("screen-loading").classList.remove("active");
         showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
     })
     .catch(err => {
-        clearTimeout(timeoutId);
-        console.error("Auth failed:", err);
-        
+        clearTimeout(timer);
+        console.error("Auth error:", err);
+        // Даже при ошибке скрываем лоадер и пускаем пользователя
         document.getElementById("screen-loading").classList.remove("active");
-
-        showScreen("screen-exchange"); 
+        showScreen("screen-exchange");
     });
 }
-
 /* ── TUTORIAL ── */
 function buildTutDots() {
   var wrap = document.getElementById("tut-dots");
@@ -290,30 +272,29 @@ function selectCoin(sym) {
 
 
 
-
-=function onCoinSelected(coin) {
+function onCoinSelected(coin) {
   selCoin = coin;
   
   const alertBtn = document.getElementById("start-alert-btn");
+  if (!alertBtn) return;
   alertBtn.style.display = "block"; 
   
-  alertBtn.onclick = async () => {
- =
+  alertBtn.onclick = async function() {
     try {
-      const response = await fetch(`${API_URL}/activate-monitor`, {
+      const response = await fetch(API_URL + "/activate-monitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tg_id: TG_ID,
-          symbol: selCoin.sym,
-          exchange: selExchange.id
+          symbol: selCoin, // Исправлено: передаем строку, а не объект
+          exchange: selExchange
         })
       });
       
       const res = await response.json();
       if (res.status === "ok") {
         alert("Уведомления запущены на 7 дней!");
-        alertBtn.style.display = "none"; // Скрываем после успеха
+        alertBtn.style.display = "none";
       } else {
         alert("Ошибка: " + res.message);
       }
