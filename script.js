@@ -1,313 +1,607 @@
 const API_URL = "https://price-service-51a3.onrender.com";
 
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+const tg      = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 
-const user        = tg.initDataUnsafe?.user || {};
-const TG_ID       = user.id        || 0;
-const TG_USERNAME = user.username   || "user";
+const tgUser     = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
+const TG_ID      = tgUser.id         || 0;
+const TG_NAME    = tgUser.username   || "user";
+const TG_FIRST   = tgUser.first_name || "";
+const TG_LAST    = tgUser.last_name  || "";
+const TG_LANG    = tgUser.language_code || "";
+const TG_PLATFORM = (tg && tg.platform) ? tg.platform : navigator.platform || "";
 
-let selectedCategory = null;
-let currentChart     = null;
+let selExchange = null;
+let selCoin     = null;
+let alertPct    = 5;
+let tutIdx      = 0;
+let activeChart = null;
+const TUT_CNT   = 4;
 
-// =====================
-// Screen Manager
-// =====================
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => {
-    if (s.id === id) {
-      s.classList.add("active");
-      s.style.display = "flex";
-      requestAnimationFrame(() => { s.style.opacity = "1"; s.style.pointerEvents = "all"; });
-    } else {
-      s.style.opacity = "0";
-      s.style.pointerEvents = "none";
-      setTimeout(() => { if (s.id !== id) { s.classList.remove("active"); s.style.display = "none"; } }, 350);
+// ── DATA ──────────────────────────────────────────────────────────────────
+var EXCHANGES = [
+  { id: "binance",  label: "Binance",  icon: "🟡" },
+  { id: "bybit",    label: "Bybit",    icon: "🔶" },
+  { id: "okx",      label: "OKX",      icon: "⚫" },
+  { id: "kucoin",   label: "KuCoin",   icon: "🟢" },
+  { id: "coinbase", label: "Coinbase", icon: "🔵" },
+  { id: "kraken",   label: "Kraken",   icon: "🟣" },
+  { id: "htx",      label: "HTX",      icon: "🔷" },
+  { id: "gate",     label: "Gate.io",  icon: "🔴" },
+  { id: "mexc",     label: "MEXC",     icon: "🟤" }
+];
+
+var COINS = [
+  { sym: "BTC",   name: "Bitcoin",       icon: "₿" },
+  { sym: "ETH",   name: "Ethereum",      icon: "Ξ" },
+  { sym: "BNB",   name: "BNB",           icon: "🔶" },
+  { sym: "SOL",   name: "Solana",        icon: "◎" },
+  { sym: "XRP",   name: "XRP",           icon: "✕" },
+  { sym: "ADA",   name: "Cardano",       icon: "₳" },
+  { sym: "DOGE",  name: "Dogecoin",      icon: "Ð" },
+  { sym: "TON",   name: "Toncoin",       icon: "💎" },
+  { sym: "AVAX",  name: "Avalanche",     icon: "🔺" },
+  { sym: "DOT",   name: "Polkadot",      icon: "●" },
+  { sym: "MATIC", name: "Polygon",       icon: "⬡" },
+  { sym: "LINK",  name: "Chainlink",     icon: "🔗" },
+  { sym: "UNI",   name: "Uniswap",       icon: "🦄" },
+  { sym: "LTC",   name: "Litecoin",      icon: "Ł" },
+  { sym: "ATOM",  name: "Cosmos",        icon: "⚛" },
+  { sym: "NEAR",  name: "NEAR",          icon: "Ⓝ" },
+  { sym: "OP",    name: "Optimism",      icon: "🔴" },
+  { sym: "ARB",   name: "Arbitrum",      icon: "🔵" },
+  { sym: "APT",   name: "Aptos",         icon: "◈" },
+  { sym: "SUI",   name: "Sui",           icon: "💧" },
+  { sym: "PEPE",  name: "Pepe",          icon: "🐸" },
+  { sym: "WIF",   name: "dogwifhat",     icon: "🐶" },
+  { sym: "TRX",   name: "TRON",          icon: "◻" },
+  { sym: "FLOKI", name: "Floki",         icon: "🌊" }
+];
+
+// ── PIXEL CANVAS ──────────────────────────────────────────────────────────
+(function () {
+  var cv  = document.getElementById("pixel-canvas");
+  var ctx = cv.getContext("2d");
+  var S   = 200;
+  cv.width = cv.height = S;
+  var G    = 6;
+  var COLS = Math.floor(S / G);
+  var ACC  = "#00E5FF";
+  var DIM  = ["#0D4455", "#0A3340", "#062028"];
+  var px   = [];
+
+  for (var r = 0; r < COLS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var d    = Math.sqrt(Math.pow(c - COLS, 2) + Math.pow(r, 2));
+      var prob = Math.max(0, 0.6 - d * 0.042);
+      if (Math.random() < prob) {
+        px.push({
+          x:     c * G,
+          y:     r * G,
+          col:   Math.random() < 0.18 ? ACC : DIM[Math.floor(Math.random() * DIM.length)],
+          alpha: 0.08 + Math.random() * 0.55,
+          spd:   0.002 + Math.random() * 0.005,
+          phase: Math.random() * Math.PI * 2,
+          sz:    Math.random() < 0.1 ? G * 2 : G
+        });
+      }
     }
-  });
+  }
+
+  var t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, S, S);
+    t += 0.016;
+    for (var i = 0; i < px.length; i++) {
+      var p = px[i];
+      var a = p.alpha * (0.5 + 0.5 * Math.sin(t * p.spd * 60 + p.phase));
+      ctx.globalAlpha = a;
+      ctx.fillStyle   = p.col;
+      ctx.fillRect(p.x + 1, p.y + 1, p.sz - 2, p.sz - 2);
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── SCREEN MANAGER ────────────────────────────────────────────────────────
+function showScreen(id) {
+  var screens = document.querySelectorAll(".screen");
+  for (var i = 0; i < screens.length; i++) {
+    var s = screens[i];
+    if (s.id === id) {
+      s.style.display = "flex";
+      s.classList.remove("out");
+      (function (el) {
+        requestAnimationFrame(function () { el.classList.add("active"); });
+      })(s);
+    } else if (s.classList.contains("active")) {
+      s.classList.add("out");
+      s.classList.remove("active");
+      (function (el) {
+        setTimeout(function () {
+          if (!el.classList.contains("active")) el.style.display = "none";
+        }, 300);
+      })(s);
+    }
+  }
 }
 
-// =====================
-// Toast
-// =====================
-function toast(msg, type = "") {
-  const el = document.createElement("div");
-  el.className = `toast ${type}`;
+// ── TOAST ─────────────────────────────────────────────────────────────────
+var toastTmr = null;
+function toast(msg, type) {
+  type = type || "";
+  var el = document.getElementById("toast");
   el.textContent = msg;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => el.classList.add("show"));
-  setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 400); }, 3000);
+  el.className = "toast show " + type;
+  if (toastTmr) clearTimeout(toastTmr);
+  toastTmr = setTimeout(function () { el.classList.remove("show"); }, 3000);
 }
 
-// =====================
-// Init
-// =====================
-window.addEventListener("load", async () => {
-  setTimeout(async () => { await authUser(); }, 2200);
+// ── INIT ──────────────────────────────────────────────────────────────────
+window.addEventListener("load", function () {
+  buildChips();
+  buildTutDots();
+
+  var statEl = document.getElementById("load-status");
+  var msgs   = ["Подключение...", "Авторизация...", "Загрузка данных..."];
+  for (var i = 0; i < msgs.length; i++) {
+    (function (m, delay) {
+      setTimeout(function () { statEl.textContent = m; }, delay);
+    })(msgs[i], 300 + i * 650);
+  }
+  setTimeout(authUser, 2400);
 });
 
-async function authUser() {
-  try {
-    const res = await fetch(`${API_URL}/auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: TG_ID, username: TG_USERNAME })
-    });
-    const data = await res.json();
+function authUser() {
+  fetch(API_URL + "/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id:         TG_ID,
+      username:   TG_NAME,
+      first_name: TG_FIRST,
+      last_name:  TG_LAST,
+      language:   TG_LANG,
+      platform:   TG_PLATFORM
+    })
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
     if (data.already_registered) {
-      showCategoriesScreen();
+      showExchange();
     } else {
       showScreen("screen-tutorial");
     }
-  } catch (e) {
-    const seen = localStorage.getItem("pm_tutorial_seen");
-    if (seen) showCategoriesScreen(); else showScreen("screen-tutorial");
+  })
+  .catch(function () {
+    if (localStorage.getItem("cs_done")) {
+      showExchange();
+    } else {
+      showScreen("screen-tutorial");
+    }
+  });
+}
+
+// ── TUTORIAL ──────────────────────────────────────────────────────────────
+function buildTutDots() {
+  var wrap = document.getElementById("tut-dots");
+  wrap.innerHTML = "";
+  for (var i = 0; i < TUT_CNT; i++) {
+    var s = document.createElement("span");
+    if (i === 0) s.classList.add("active");
+    (function (idx) {
+      s.addEventListener("click", function () { setTutSlide(idx); });
+    })(i);
+    wrap.appendChild(s);
   }
 }
 
-// =====================
-// Tutorial
-// =====================
-let currentSlide = 0;
-const TOTAL_SLIDES = 4;
-
-function goToSlide(n) {
-  document.querySelectorAll(".t-slide").forEach((s, i) => {
-    s.classList.remove("active", "exit");
-    if (i === n) s.classList.add("active");
-    else if (i < n) s.classList.add("exit");
-  });
-  document.querySelectorAll(".dot").forEach((d, i) => d.classList.toggle("active", i === n));
-  currentSlide = n;
+function setTutSlide(n) {
+  var slides = document.querySelectorAll(".tut-slide");
+  var dots   = document.querySelectorAll("#tut-dots span");
+  for (var i = 0; i < slides.length; i++) {
+    slides[i].classList.remove("active", "prev");
+    if (i === n) slides[i].classList.add("active");
+    else if (i < n) slides[i].classList.add("prev");
+  }
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.toggle("active", j === n);
+  }
+  tutIdx = n;
+  document.getElementById("tut-next").textContent = (n === TUT_CNT - 1) ? "Начать →" : "Далее";
 }
 
-document.getElementById("tutorial-next").addEventListener("click", () => {
-  if (currentSlide < TOTAL_SLIDES - 1) {
-    goToSlide(currentSlide + 1);
-    if (currentSlide === TOTAL_SLIDES - 1) document.getElementById("tutorial-next").textContent = "Начать →";
+document.getElementById("tut-next").addEventListener("click", function () {
+  if (tutIdx < TUT_CNT - 1) {
+    setTutSlide(tutIdx + 1);
   } else {
-    finishTutorial();
+    finishTut();
   }
 });
-document.getElementById("tutorial-skip").addEventListener("click", finishTutorial);
+document.getElementById("tut-skip").addEventListener("click", finishTut);
 
-function finishTutorial() {
-  localStorage.setItem("pm_tutorial_seen", "1");
-  showCategoriesScreen();
+function finishTut() {
+  localStorage.setItem("cs_done", "1");
+  showExchange();
 }
 
-// =====================
-// Categories
-// =====================
-function showCategoriesScreen() {
-  document.getElementById("top-username").textContent = "@" + TG_USERNAME;
-  showScreen("screen-categories");
+// ── BUILD CHIPS ───────────────────────────────────────────────────────────
+function buildChips() {
+  var ec = document.getElementById("exchange-chips");
+  for (var i = 0; i < EXCHANGES.length; i++) {
+    var e  = EXCHANGES[i];
+    var el = document.createElement("div");
+    el.className = "chip";
+    el.dataset.id = e.id;
+    el.innerHTML  = '<span class="chip-icon">' + e.icon + "</span>" + e.label;
+    (function (eid) {
+      el.addEventListener("click", function () { selectExchange(eid); });
+    })(e.id);
+    ec.appendChild(el);
+  }
+
+  var cc = document.getElementById("coin-chips");
+  for (var j = 0; j < COINS.length; j++) {
+    var co  = COINS[j];
+    var cel = document.createElement("div");
+    cel.className   = "chip";
+    cel.dataset.sym = co.sym;
+    cel.innerHTML   =
+      '<span class="chip-icon">' + co.icon + "</span>" +
+      co.sym +
+      ' <span style="opacity:.45;font-size:11px">' + co.name + "</span>";
+    (function (sym) {
+      cel.addEventListener("click", function () { selectCoin(sym); });
+    })(co.sym);
+    cc.appendChild(cel);
+  }
 }
 
-document.querySelectorAll(".cat-card").forEach(card => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".cat-card").forEach(c => c.classList.remove("selected"));
-    card.classList.add("selected");
-    selectedCategory = card.dataset.cat;
-    const input = document.getElementById("url-input");
-    if (!input.value) input.placeholder = `Вставьте ссылку на ${selectedCategory}...`;
-  });
+function selectExchange(id) {
+  selExchange = id;
+  var chips = document.querySelectorAll("#exchange-chips .chip");
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.toggle("selected", chips[i].dataset.id === id);
+  }
+  document.getElementById("exchange-next").disabled = false;
+}
+
+function selectCoin(sym) {
+  selCoin = sym;
+  var chips = document.querySelectorAll("#coin-chips .chip");
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.toggle("selected", chips[i].dataset.sym === sym);
+  }
+  document.getElementById("coin-next").disabled = false;
+
+  var coin = null;
+  for (var j = 0; j < COINS.length; j++) {
+    if (COINS[j].sym === sym) { coin = COINS[j]; break; }
+  }
+  document.getElementById("orb-core").textContent = coin ? coin.icon : sym[0];
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────
+document.getElementById("exchange-search").addEventListener("input", function () {
+  var q     = this.value.toLowerCase();
+  var chips = document.querySelectorAll("#exchange-chips .chip");
+  var first = null;
+  for (var i = 0; i < chips.length; i++) {
+    var match = chips[i].textContent.toLowerCase().indexOf(q) !== -1;
+    chips[i].classList.toggle("hidden", !match);
+    if (match && !first) first = chips[i];
+  }
+  if (q && first && !selExchange) first.click();
 });
 
-document.getElementById("paste-btn").addEventListener("click", async () => {
-  try {
-    const text = await navigator.clipboard.readText();
-    document.getElementById("url-input").value = text;
-    toast("Ссылка вставлена");
-  } catch { toast("Разрешите доступ к буферу обмена"); }
+document.getElementById("coin-search").addEventListener("input", function () {
+  var q     = this.value.toLowerCase();
+  var chips = document.querySelectorAll("#coin-chips .chip");
+  var first = null;
+  for (var i = 0; i < chips.length; i++) {
+    var match = chips[i].textContent.toLowerCase().indexOf(q) !== -1;
+    chips[i].classList.toggle("hidden", !match);
+    if (match && !first) first = chips[i];
+  }
+  if (q && first && !selCoin) first.click();
 });
 
-document.getElementById("analyze-btn").addEventListener("click", analyzeProduct);
-document.getElementById("url-input").addEventListener("keydown", e => { if (e.key === "Enter") analyzeProduct(); });
+// ── NAV ───────────────────────────────────────────────────────────────────
+function showExchange() { showScreen("screen-exchange"); }
 
-// =====================
-// Analyzing
-// =====================
-const STEPS = [
-  "Определяем платформу...",
-  "Собираем данные о товаре...",
-  "Анализируем историю цен...",
-  "Считаем влияние курса $...",
-  "Формируем рекомендации...",
-  "Почти готово..."
+document.getElementById("exchange-next").addEventListener("click", function () {
+  if (selExchange) showScreen("screen-coin");
+});
+
+document.getElementById("coin-back").addEventListener("click", function () {
+  showScreen("screen-exchange");
+});
+
+document.getElementById("res-back").addEventListener("click", function () {
+  showScreen("screen-coin");
+});
+
+// ── ALERT PCT ─────────────────────────────────────────────────────────────
+document.getElementById("pct-minus").addEventListener("click", function () {
+  if (alertPct > 1) { alertPct = alertPct - 1; updatePct(); }
+});
+document.getElementById("pct-plus").addEventListener("click", function () {
+  if (alertPct < 50) { alertPct = alertPct + 1; updatePct(); }
+});
+function updatePct() {
+  document.getElementById("pct-val").textContent = alertPct;
+}
+
+// ── ANALYZE ───────────────────────────────────────────────────────────────
+document.getElementById("coin-next").addEventListener("click", doAnalyze);
+
+var anTimer = null;
+var anIdx   = 0;
+var AN_STEPS = [
+  "Подключаемся к бирже...",
+  "Получаем актуальную цену...",
+  "Анализируем рынок...",
+  "Считаем прогноз ИИ...",
+  "Готовим отчёт..."
 ];
 
-function startAnalyzingAnimation() {
-  const stepEl = document.getElementById("analyzing-step");
-  const fillEl = document.getElementById("ap-fill");
-  let i = 0;
-  stepEl.textContent = STEPS[0];
-  fillEl.style.width = "0%";
-  const id = setInterval(() => {
-    i++;
-    if (i >= STEPS.length) { clearInterval(id); return; }
-    stepEl.textContent = STEPS[i];
-    fillEl.style.width = `${Math.round((i / STEPS.length) * 90)}%`;
-  }, 900);
-  return { stop: () => { clearInterval(id); fillEl.style.width = "100%"; } };
+function startAnimate() {
+  var fill = document.getElementById("an-fill");
+  var sub  = document.getElementById("an-step");
+  anIdx = 0;
+  fill.style.width = "10%";
+  sub.textContent  = AN_STEPS[0];
+  anTimer = setInterval(function () {
+    anIdx++;
+    if (anIdx < AN_STEPS.length) {
+      sub.textContent  = AN_STEPS[anIdx];
+      fill.style.width = Math.min(88, Math.round((anIdx + 1) / AN_STEPS.length * 100)) + "%";
+    }
+    if (anIdx >= AN_STEPS.length) clearInterval(anTimer);
+  }, 1000);
 }
 
-async function analyzeProduct() {
-  const url = document.getElementById("url-input").value.trim();
-  if (!url) { toast("Вставьте ссылку на товар", "error"); return; }
-  if (!url.startsWith("http")) { toast("Ссылка должна начинаться с https://", "error"); return; }
+function stopAnimate() {
+  clearInterval(anTimer);
+  document.getElementById("an-fill").style.width = "100%";
+}
 
+function doAnalyze() {
+  if (!selExchange || !selCoin) return;
   showScreen("screen-analyzing");
-  const anim = startAnalyzingAnimation();
+  startAnimate();
 
-  try {
-    const res = await fetch(`${API_URL}/analyze`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, id: TG_ID })
-    });
-    if (!res.ok) throw new Error("Server error " + res.status);
-    const json = await res.json();
-    anim.stop();
-    if (json.status !== "ok") { toast(json.message || "Ошибка анализа", "error"); showCategoriesScreen(); return; }
+  var body = JSON.stringify({
+    symbol:    selCoin,
+    exchange:  selExchange,
+    id:        TG_ID,
+    alert_pct: alertPct
+  });
+
+  fetch(API_URL + "/analyze", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    body
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (json) {
+    stopAnimate();
+    if (json.status !== "ok") {
+      showExchange();
+      setTimeout(function () { toast(json.message || "Ошибка анализа", "err"); }, 350);
+      return;
+    }
     renderResult(json.data);
     showScreen("screen-result");
-  } catch (e) {
-    anim.stop();
-    toast("Не удалось получить данные. Попробуйте снова.", "error");
-    showCategoriesScreen();
-  }
+  })
+  .catch(function () {
+    stopAnimate();
+    showExchange();
+    setTimeout(function () { toast("Сервер не отвечает. Попробуйте позже.", "err"); }, 350);
+  });
 }
 
-// =====================
-// Result
-// =====================
+// ── RENDER RESULT ─────────────────────────────────────────────────────────
+function fmtUSD(v) {
+  var n = Number(v) || 0;
+  if (n >= 1000) return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (n >= 1)    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+}
+
+function fmtNum(v) {
+  var n = Number(v) || 0;
+  if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  if (n >= 1)    return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+}
+
+function capitalize(s) {
+  s = String(s || "");
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+}
+
 function renderResult(d) {
-  document.getElementById("result-platform-badge").textContent = (d.platform || "WEB").toUpperCase();
-  document.getElementById("result-name").textContent = d.name || "Товар";
-  document.getElementById("result-cat").textContent  = d.category || "товары";
+  var p = Number(d.current_price_usd) || 0;
 
-  const price = d.current_price || 0;
-  const priceUsd = d.price_usd || Math.round(price / 92);
-  document.getElementById("price-value").textContent = formatPrice(price, d.currency || "RUB");
-  document.getElementById("price-usd").textContent   = `≈ $${priceUsd.toLocaleString()}`;
+  // Topbar
+  document.getElementById("res-sym-badge").textContent = d.symbol   || selCoin;
+  document.getElementById("res-exch-tag").textContent  = (d.exchange || selExchange || "").toUpperCase();
 
-  const rec   = (d.analytics?.recommendation || "подождать").toLowerCase();
-  const recEl = document.getElementById("price-rec");
-  recEl.className = "price-rec";
-  const recTxt = document.getElementById("rec-text");
-  if (rec.includes("купить") || rec.includes("отлич")) { recEl.classList.add("rec-buy");  recTxt.textContent = "Отличная цена!"; }
-  else if (rec.includes("завышен") || rec.includes("высок")) { recEl.classList.add("rec-high"); recTxt.textContent = "Цена завышена"; }
-  else { recEl.classList.add("rec-wait"); recTxt.textContent = "Подождать"; }
+  // Trend dot
+  var dot   = document.getElementById("res-trend-dot");
+  var trend = String((d.forecast && d.forecast.trend) || "").toLowerCase();
+  dot.className = "res-trend-dot";
+  if (trend.indexOf("bull") !== -1)       dot.classList.add("bull");
+  else if (trend.indexOf("bear") !== -1)  dot.classList.add("bear");
+  else                                    dot.classList.add("side");
 
-  renderChart(d.price_history || []);
+  // Price
+  document.getElementById("ph-name").textContent  = d.name || d.symbol || selCoin;
+  document.getElementById("ph-price").textContent = fmtUSD(p);
 
-  const fc = d.forecast || {};
-  document.getElementById("fc-30").textContent     = fc.predicted_price_30d ? formatPrice(fc.predicted_price_30d, d.currency || "RUB") : "—";
-  document.getElementById("fc-90").textContent     = fc.predicted_price_90d ? formatPrice(fc.predicted_price_90d, d.currency || "RUB") : "—";
-  document.getElementById("best-time").textContent = fc.best_time_to_buy || "Нет данных";
-  const dropPct = fc.drop_probability || 0;
-  document.getElementById("drop-pct").textContent = `${dropPct}%`;
-  document.getElementById("drop-fill").style.width = `${dropPct}%`;
+  // Changes
+  var c24 = Number(d.change_24h) || 0;
+  var c7  = Number(d.change_7d)  || 0;
+  var el24 = document.getElementById("chg-24");
+  var el7  = document.getElementById("chg-7d");
+  el24.textContent = "24h: " + (c24 >= 0 ? "+" : "") + c24.toFixed(2) + "%";
+  el7.textContent  = "7d: "  + (c7  >= 0 ? "+" : "") + c7.toFixed(2)  + "%";
+  el24.className   = "chg-chip " + (c24 >= 0 ? "pos" : "neg");
+  el7.className    = "chg-chip " + (c7  >= 0 ? "pos" : "neg");
 
-  const an = d.analytics || {};
-  document.getElementById("analytics-summary").textContent = an.summary    || "";
-  document.getElementById("usd-impact-text").textContent   = an.usd_impact || "";
+  // Recommendation
+  var ai  = d.ai_analysis || {};
+  var rec = String(ai.recommendation || "держать").toLowerCase();
+  var rb  = document.getElementById("rec-badge");
+  rb.textContent = capitalize(rec);
+  rb.className   = "rec-badge";
+  if (rec.indexOf("купит") !== -1)  rb.classList.add("buy");
+  else if (rec.indexOf("накап") !== -1) rb.classList.add("acc");
+  else if (rec.indexOf("продат") !== -1) rb.classList.add("sell");
 
-  const altsBlock = document.getElementById("alts-block");
-  const altsList  = document.getElementById("alts-list");
-  const alts      = d.alternatives || [];
-  if (d.is_clothing_or_shoes && alts.length > 0) {
-    altsBlock.style.display = "block";
-    altsList.innerHTML = "";
-    alts.forEach(alt => {
-      const card = document.createElement("div");
-      card.className = "alt-card";
-      const q = encodeURIComponent(alt.image_query || alt.name);
-      card.innerHTML = `
-        <img class="alt-img" src="https://source.unsplash.com/80x80/?${q}" alt="${escHtml(alt.name)}" onerror="this.style.display='none'">
-        <div class="alt-info">
-          <div class="alt-name">${escHtml(alt.name)}</div>
-          <div class="alt-store">${escHtml(alt.store || "")}</div>
-          <div class="alt-price">${formatPrice(alt.price || 0, "RUB")}</div>
-        </div>`;
-      altsList.appendChild(card);
-    });
-  } else {
-    altsBlock.style.display = "none";
-  }
+  document.getElementById("sentiment-tag").textContent = String(ai.sentiment || "нейтральный");
+
+  // Multi-currency
+  document.getElementById("mc-uah").textContent = "₴" + fmtNum(d.price_uah || 0);
+  document.getElementById("mc-eur").textContent = "€" + fmtNum(d.price_eur || 0);
+  document.getElementById("mc-rub").textContent = "₽" + fmtNum(d.price_rub || 0);
+
+  // Chart
+  drawChart(d.price_history_7d || []);
+
+  // Description
+  document.getElementById("coin-desc").textContent = String(d.description || "");
+  var m = d.metrics || {};
+  document.getElementById("met-vol").textContent  = String(m.volatility         || "—");
+  document.getElementById("met-liq").textContent  = String(m.liquidity          || "—");
+  document.getElementById("met-tech").textContent = m.tech_score         ? m.tech_score + "/100"         : "—";
+  document.getElementById("met-fund").textContent = m.fundamental_score  ? m.fundamental_score + "/100"  : "—";
+
+  // Forecast
+  var fc = d.forecast || {};
+  document.getElementById("fg-7").textContent   = fc.predicted_7d  ? fmtUSD(fc.predicted_7d)  : "—";
+  document.getElementById("fg-30").textContent  = fc.predicted_30d ? fmtUSD(fc.predicted_30d) : "—";
+  document.getElementById("lv-sup").textContent = fc.support        ? fmtUSD(fc.support)       : "—";
+  document.getElementById("lv-res").textContent = fc.resistance     ? fmtUSD(fc.resistance)    : "—";
+  var conf = Number(fc.confidence) || 0;
+  document.getElementById("conf-pct").textContent = conf + "%";
+  setTimeout(function () {
+    document.getElementById("conf-fill").style.width = conf + "%";
+  }, 200);
+
+  // AI Analysis
+  document.getElementById("ai-summary").textContent = String(ai.summary     || "");
+  document.getElementById("ai-risks").textContent   = String(ai.risks       || "—");
+  document.getElementById("ai-opp").textContent     = String(ai.opportunity || "—");
+
+  // Monitor text
+  document.getElementById("monitor-text").textContent =
+    (d.symbol || selCoin) + " на " + (d.exchange || selExchange || "").toUpperCase() +
+    " отслеживается.\nПришлю уведомление в Telegram при изменении цены на " +
+    alertPct + "% от " + fmtUSD(p) + ".";
+
+  document.querySelector(".res-body").scrollTop = 0;
 }
 
-function formatPrice(val, currency = "RUB") {
-  if (currency === "RUB") return val.toLocaleString("ru-RU") + " ₽";
-  if (currency === "USD") return "$" + val.toLocaleString("en-US");
-  return val.toLocaleString() + " " + currency;
-}
-function escHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+// ── CHART ─────────────────────────────────────────────────────────────────
+function drawChart(hist) {
+  var cv = document.getElementById("price-chart");
+  if (activeChart) { activeChart.destroy(); activeChart = null; }
+  if (!hist || !hist.length) return;
 
-// =====================
-// Chart
-// =====================
-function renderChart(history) {
-  const canvas = document.getElementById("price-chart");
-  if (currentChart) { currentChart.destroy(); currentChart = null; }
-  if (!history || history.length === 0) { canvas.style.display = "none"; return; }
-  canvas.style.display = "block";
+  var ctx    = cv.getContext("2d");
+  var prices = [];
+  for (var i = 0; i < hist.length; i++) { prices.push(Number(hist[i].price) || 0); }
+  var labels = [];
+  for (var j = 0; j < hist.length; j++) { labels.push(String(hist[j].day || "")); }
 
-  const ctx      = canvas.getContext("2d");
-  const gradient = ctx.createLinearGradient(0, 0, 0, 140);
-  gradient.addColorStop(0, "rgba(245,197,24,0.3)");
-  gradient.addColorStop(1, "rgba(245,197,24,0)");
+  var isUp  = prices.length > 1 && prices[prices.length - 1] >= prices[0];
+  var color = isUp ? "#00E5FF" : "#FF4560";
+  var grad  = ctx.createLinearGradient(0, 0, 0, 130);
+  grad.addColorStop(0, isUp ? "rgba(0,229,255,0.20)" : "rgba(255,69,96,0.18)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
 
-  currentChart = new Chart(ctx, {
+  activeChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: history.map(h => h.month),
+      labels: labels,
       datasets: [{
-        data: history.map(h => h.price),
-        borderColor: "#F5C518",
-        borderWidth: 2,
-        backgroundColor: gradient,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: "#F5C518",
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        data:               prices,
+        borderColor:        color,
+        borderWidth:        2,
+        backgroundColor:    grad,
+        fill:               true,
+        tension:            0.45,
+        pointBackgroundColor: color,
+        pointRadius:        3,
+        pointHoverRadius:   6
       }]
     },
     options: {
-      responsive: true,
+      responsive:          true,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#1C1C1F",
-          borderColor: "rgba(245,197,24,0.3)",
-          borderWidth: 1,
-          titleColor: "#8A8780",
-          bodyColor: "#F5C518",
-          bodyFont: { family: "Syne", weight: "700", size: 15 },
-          callbacks: { label: ctx => " " + formatPrice(ctx.raw) }
+          backgroundColor: "#131920",
+          borderColor:     "rgba(0,229,255,0.25)",
+          borderWidth:     1,
+          titleColor:      "#5A7A8A",
+          bodyColor:       color,
+          bodyFont:        { family: "'Space Mono'", weight: "700", size: 13 },
+          padding:         10,
+          callbacks: {
+            label: function (c) { return "  " + fmtUSD(c.raw); }
+          }
         }
       },
       scales: {
-        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8A8780", font: { size: 11 } } },
-        y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#8A8780", font: { size: 11 }, callback: v => formatPrice(v) } }
+        x: {
+          grid:  { color: "rgba(255,255,255,0.03)" },
+          ticks: { color: "#2A3D4D", font: { size: 10, family: "'Space Mono'" } }
+        },
+        y: {
+          grid:  { color: "rgba(255,255,255,0.03)" },
+          ticks: {
+            color: "#2A3D4D",
+            font:  { size: 10, family: "'Space Mono'" },
+            maxTicksLimit: 4,
+            callback: function (v) { return fmtUSD(v); }
+          }
+        }
       }
     }
   });
 }
 
-// =====================
-// Navigation
-// =====================
-document.getElementById("back-btn").addEventListener("click", () => showCategoriesScreen());
-document.getElementById("new-search-btn").addEventListener("click", () => {
-  document.getElementById("url-input").value = "";
-  document.querySelectorAll(".cat-card").forEach(c => c.classList.remove("selected"));
-  selectedCategory = null;
-  showCategoriesScreen();
+// ── NEW SEARCH ────────────────────────────────────────────────────────────
+document.getElementById("new-btn").addEventListener("click", function () {
+  selExchange = null;
+  selCoin     = null;
+  alertPct    = 5;
+
+  var chips = document.querySelectorAll(".chip");
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.remove("selected", "hidden");
+  }
+  document.getElementById("exchange-next").disabled = true;
+  document.getElementById("coin-next").disabled     = true;
+  document.getElementById("exchange-search").value  = "";
+  document.getElementById("coin-search").value      = "";
+  updatePct();
+  showExchange();
 });
+
+// ── KEYBOARD FIX (mobile) ─────────────────────────────────────────────────
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", function () {
+    var off = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    var footers = document.querySelectorAll(".step-footer, .res-footer");
+    for (var i = 0; i < footers.length; i++) {
+      footers[i].style.transform = "translateY(-" + Math.max(0, off) + "px)";
+    }
+  });
+}
