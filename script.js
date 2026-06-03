@@ -13,6 +13,12 @@ var TG_LAST   = tgUser.last_name  || "";
 var TG_LANG   = tgUser.language_code || "";
 var TG_PLAT   = (tg && tg.platform) ? tg.platform : (navigator.platform || "");
 
+var isDesktop = /Desktop|Win32|MacIntel|Linux x86_64/i.test(navigator.platform);
+
+if (isDesktop && !window.Telegram.WebApp.initData) {
+  document.body.innerHTML = '<div style="padding:20px; color:white; text-align:center;">Приложение доступно только в мобильной версии Telegram.</div>';
+  throw new Error("Desktop access restricted");
+}
 var selExchange = null;
 var selCoin     = null;
 var selForex    = null;
@@ -118,24 +124,52 @@ window.addEventListener("load", function() {
   }
 });
 
+// Функция проверки доступа и авторизации
 function authUser() {
-  fetch(API_URL + "/auth", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST,
-      last_name: TG_LAST, language: TG_LANG, platform: TG_PLAT })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    document.getElementById("screen-loading").classList.remove("active");
-    var uEl = document.getElementById("top-username");
-    if (uEl && TG_NAME) uEl.textContent = "@" + TG_NAME;
-    showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
-  })
-  .catch(function() {
-    document.getElementById("screen-loading").classList.remove("active");
-    showScreen(localStorage.getItem("cs_done") ? "screen-exchange" : "screen-tutorial");
-  });
+    // 1. ПРОВЕРКА: Если нет Telegram WebApp, блокируем доступ (ПК)
+    if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
+        document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; text-align:center; padding:20px;">
+                <h2>Доступ ограничен</h2>
+                <p>Пожалуйста, откройте приложение через мобильный клиент Telegram.</p>
+            </div>
+        `;
+        return;
+    }
+
+    // 2. ЛОГИКА ЗАГРУЗКИ: Добавляем таймаут, чтобы не висеть вечно
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000); 
+
+    fetch(API_URL + "/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: TG_ID,
+            username: TG_NAME,
+            first_name: TG_FIRST,
+            last_name: TG_LAST,
+            lang: TG_LANG
+        }),
+        signal: controller.signal
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Server error");
+        return response.json();
+    })
+    .then(data => {
+        clearTimeout(timeoutId);
+        document.getElementById("screen-loading").classList.remove("active");
+        showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
+    })
+    .catch(err => {
+        clearTimeout(timeoutId);
+        console.error("Auth failed:", err);
+        
+        document.getElementById("screen-loading").classList.remove("active");
+
+        showScreen("screen-exchange"); 
+    });
 }
 
 /* ── TUTORIAL ── */
