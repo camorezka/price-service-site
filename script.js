@@ -118,6 +118,24 @@ window.addEventListener("load", function() {
   }
 });
 
+
+
+
+
+
+function hideLoading() {
+  const loader = document.getElementById('screen-loading');
+  if (loader) {
+    loader.style.opacity = '0';
+    setTimeout(() => loader.style.display = 'none', 350);
+  }
+}
+
+setTimeout(hideLoading, 7000);
+
+
+
+
 function authUser() {
   fetch(API_URL + "/auth", {
     method: "POST",
