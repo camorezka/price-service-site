@@ -738,13 +738,22 @@ if (window.visualViewport) {
 }
 
 
+/* ── ИСПРАВЛЕННЫЙ БЛОК ЛОАДЕРА В КОНЦЕ ФАЙЛА ── */
 window.addEventListener('load', () => {
     setTimeout(() => {
         const loader = document.getElementById('screen-loading');
         if (loader && loader.classList.contains('active')) {
-            console.log("Принудительное скрытие экрана загрузки");
+            console.log("Скрытие экрана загрузки");
             loader.classList.remove('active');
+            loader.style.display = 'none'; // Гарантированное скрытие
 
+            // Активируем начальный экран (обычно это экран бирж)
+            // Если у вас в index.html другой ID для экрана бирж, замените 'screen-exchange'
+            var startScreen = document.getElementById('screen-exchange'); 
+            if (startScreen) {
+                startScreen.style.display = 'flex';
+                startScreen.classList.add('active');
+            }
         }
-    }, 5000); 
+    }, 2000); 
 });
