@@ -736,3 +736,15 @@ if (window.visualViewport) {
     });
   });
 }
+
+
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const loader = document.getElementById('screen-loading');
+        if (loader && loader.classList.contains('active')) {
+            console.log("Принудительное скрытие экрана загрузки");
+            loader.classList.remove('active');
+
+        }
+    }, 5000); 
+});
