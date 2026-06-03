@@ -125,35 +125,45 @@ window.addEventListener("load", function() {
 });
 
 function authUser() {
-    // Если WebApp не инициализирован, сразу выходим
-    if (!window.Telegram || !window.Telegram.WebApp) {
+    // Безопасный таймаут для скрытия загрузчика в любом случае
+    var loader = document.getElementById("screen-loading");
+    var safetyTimer = setTimeout(function() {
+        if (loader && loader.classList.contains("active")) {
+            console.warn("Таймаут авторизации, принудительное скрытие");
+            loader.classList.remove("active");
+            showScreen("screen-exchange"); // Переход на основной экран
+        }
+    }, 5000);
+
+    // Если нет WebApp, просто идем дальше
+    if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
+        console.log("WebApp не найден, пропуск авторизации");
+        clearTimeout(safetyTimer);
+        if (loader) loader.classList.remove("active");
         showScreen("screen-exchange");
         return;
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000); // 7 секунд и отмена
-
     fetch(API_URL + "/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST, last_name: TG_LAST, lang: TG_LANG }),
-        signal: controller.signal
+        body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST, last_name: TG_LAST, lang: TG_LANG })
     })
-    .then(r => r.json())
-    .then(data => {
-        clearTimeout(timer);
-        document.getElementById("screen-loading").classList.remove("active");
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        clearTimeout(safetyTimer);
+        if (loader) loader.classList.remove("active");
         showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
     })
-    .catch(err => {
-        clearTimeout(timer);
+    .catch(function(err) {
+        clearTimeout(safetyTimer);
         console.error("Auth error:", err);
-        // Даже при ошибке скрываем лоадер и пускаем пользователя
-        document.getElementById("screen-loading").classList.remove("active");
+        if (loader) loader.classList.remove("active");
         showScreen("screen-exchange");
     });
 }
+
+
 /* ── TUTORIAL ── */
 function buildTutDots() {
   var wrap = document.getElementById("tut-dots");
