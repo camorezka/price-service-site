@@ -12,6 +12,23 @@
 </head>
 <body>
 
+<!-- OVERLAY: Подписка на канал -->
+<div id="sub-overlay" style="display:none; position:fixed; inset:0; z-index:99999; background:#0D0D0E; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center;">
+  <div style="width:180px; height:180px; margin-bottom:24px;">
+    <div class="tenor-gif-embed" data-postid="12264094967905194494" data-share-method="host" data-aspect-ratio="1" data-width="100%">
+      <a href="https://tenor.com/view/gif-12264094967905194494">стикер</a>
+    </div>
+    <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
+  </div>
+  <p style="font-family:'DM Sans',sans-serif; font-size:16px; color:#F0EFE8; margin-bottom:28px; line-height:1.6;">
+    Подпишитесь на канал,<br>чтобы пользоваться ботом
+  </p>
+  <a href="https://t.me/MonitorSpace" target="_blank"
+     style="display:inline-block; background:#F5C518; color:#0D0D0E; font-family:'Syne',sans-serif; font-weight:700; font-size:15px; padding:14px 36px; border-radius:16px; text-decoration:none; letter-spacing:0.02em;">
+    Подписаться на канал →
+  </a>
+</div>
+
 <!-- SCREEN: Loading -->
 <div id="screen-loading" class="screen active">
   <div class="loader-wrap">
@@ -156,17 +173,9 @@
     <div class="cards-col" id="coin-cards">
       <div class="loading-coins">Загружаем монеты с биржи...</div>
     </div>
-    <div class="alert-row">
-      <span class="alert-label">Уведомить при изменении</span>
-      <div class="pct-ctrl">
-        <button class="pct-btn" id="pct-minus">−</button>
-        <span class="pct-val" id="pct-val">5</span><span class="pct-sign">%</span>
-        <button class="pct-btn" id="pct-plus">+</button>
-      </div>
-    </div>
     <div class="action-bar">
       <button class="btn-primary full" id="coin-next" disabled>
-        <span class="btn-text">Запустить мониторинг</span>
+        <span class="btn-text">Анализировать</span>
         <span class="btn-arrow">→</span>
       </button>
     </div>
@@ -190,17 +199,9 @@
       <input type="text" id="forex-search" placeholder="EUR, UAH, GBP..." autocomplete="off" />
     </div>
     <div class="cards-col" id="forex-cards"></div>
-    <div class="alert-row">
-      <span class="alert-label">Уведомить при изменении</span>
-      <div class="pct-ctrl">
-        <button class="pct-btn" id="forex-pct-minus">−</button>
-        <span class="pct-val" id="forex-pct-val">1</span><span class="pct-sign">%</span>
-        <button class="pct-btn" id="forex-pct-plus">+</button>
-      </div>
-    </div>
     <div class="action-bar">
       <button class="btn-primary full" id="forex-next" disabled>
-        <span class="btn-text">Запустить мониторинг</span>
+        <span class="btn-text">Анализировать</span>
         <span class="btn-arrow">→</span>
       </button>
     </div>
@@ -237,6 +238,11 @@
         <div class="rh-exch-tag" id="res-exch-tag">BINANCE</div>
         <h2 class="result-name" id="ph-name">Bitcoin</h2>
         <p class="result-desc" id="ph-desc"></p>
+        <!-- КНОПКА МОНИТОРИНГА — под описанием -->
+        <button class="btn-monitor" id="start-monitor-btn" style="display:none;">
+          🔔 Начать мониторинг
+        </button>
+        <div class="monitor-info" id="monitor-info" style="display:none;"></div>
       </div>
       <div class="rh-price-pill">
         <span class="rh-price mono" id="ph-price">$0</span>
@@ -319,9 +325,6 @@
     </div>
 
     <div class="result-footer">
-      <button class="btn-primary full" id="start-alert-btn" style="display: none; margin-bottom: 12px;">
-        Запустить уведомления
-      </button>
       <button class="btn-primary full" id="new-btn">Новый мониторинг</button>
     </div>
   </div>
