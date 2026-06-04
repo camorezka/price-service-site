@@ -13,19 +13,16 @@ var TG_LAST   = tgUser.last_name  || "";
 var TG_LANG   = tgUser.language_code || "";
 var TG_PLAT   = (tg && tg.platform) ? tg.platform : (navigator.platform || "");
 
-var isDesktop = /Desktop|Win32|MacIntel|Linux x86_64/i.test(navigator.platform);
 var selExchange = null;
 var selCoin     = null;
 var selForex    = null;
-var alertPct    = 5;
-var forexPct    = 1;
 var tutIdx      = 0;
 var activeChart = null;
 var TUT_CNT     = 4;
 var anTimer     = null;
 var anIdx       = 0;
 var lastResultType = "crypto";
-var allCoins    = []; 
+var allCoins    = [];
 
 var EXCHANGES = [
   { id: "binance",  label: "Binance",  sub: "Крупнейшая биржа мира",        vol: "$76B/сут",  tag: "#1 по объёму" },
@@ -121,19 +118,29 @@ function toast(msg, type) {
   el.textContent = msg;
   el.className = "toast show " + (type || "");
   if (toastTmr) clearTimeout(toastTmr);
-  toastTmr = setTimeout(function() { el.classList.remove("show"); }, 3000);
+  toastTmr = setTimeout(function() { el.classList.remove("show"); }, 3500);
 }
 function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
 
+/* ── ПРОВЕРКА ПОДПИСКИ НА КАНАЛ ── */
+function checkSubscription(callback) {
+  // Проверка только внутри Telegram WebApp
+  if (!tg || !TG_ID) { callback(true); return; }
+  fetch(API_URL + "/check-sub?tg_id=" + TG_ID)
+    .then(function(r) { return r.json(); })
+    .then(function(data) { callback(data.subscribed === true); })
+    .catch(function() { callback(true); }); // при ошибке — пускаем
+}
+
+function showSubOverlay() {
+  var el = document.getElementById("sub-overlay");
+  if (el) el.style.display = "flex";
+}
+
 /* ── INIT ── */
 document.addEventListener("DOMContentLoaded", function () {
-  if (typeof buildExchangeCards === 'function') {
-      buildExchangeCards(); 
-  } else if (typeof buildChips === 'function') {
-      buildChips();
-  }
-  
-  if (typeof buildForexCards === 'function') buildForexCards();
+  buildExchangeCards();
+  buildForexCards();
   buildTutDots();
 
   var topUser = document.getElementById("top-username");
@@ -153,30 +160,49 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function authUser() {
-    if (!window.Telegram || !window.Telegram.WebApp) {
-        showScreen("screen-exchange");
-        return;
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    showScreen("screen-exchange");
+    return;
+  }
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 7000);
+  fetch(API_URL + "/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST, last_name: TG_LAST, lang: TG_LANG }),
+    signal: controller.signal
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    clearTimeout(timer);
+    document.getElementById("screen-loading").classList.remove("active");
+
+    // Новая регистрация — показываем уведомление
+    if (!data.already_registered) {
+      var nick = TG_NAME && TG_NAME !== "user" ? "@" + TG_NAME : (TG_FIRST || "пользователь");
+      setTimeout(function() {
+        toast("✅ " + nick + " успешно зарегистрирован!", "success");
+      }, 600);
     }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000); 
-    fetch(API_URL + "/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: TG_ID, username: TG_NAME, first_name: TG_FIRST, last_name: TG_LAST, lang: TG_LANG }),
-        signal: controller.signal
-    })
-    .then(r => r.json())
-    .then(data => {
-        clearTimeout(timer);
-        document.getElementById("screen-loading").classList.remove("active");
-        showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
-    })
-    .catch(err => {
-        clearTimeout(timer);
-        console.error("Auth error:", err);
-        document.getElementById("screen-loading").classList.remove("active");
-        showScreen("screen-exchange");
+
+    // Проверяем подписку
+    checkSubscription(function(subscribed) {
+      if (!subscribed) {
+        showSubOverlay();
+        return;
+      }
+      showScreen(data.already_registered ? "screen-exchange" : "screen-tutorial");
     });
+  })
+  .catch(function(err) {
+    clearTimeout(timer);
+    console.error("Auth error:", err);
+    document.getElementById("screen-loading").classList.remove("active");
+    checkSubscription(function(subscribed) {
+      if (!subscribed) { showSubOverlay(); return; }
+      showScreen("screen-exchange");
+    });
+  });
 }
 
 /* ── TUTORIAL ── */
@@ -296,31 +322,6 @@ function selectForex(code) {
   if (btn) btn.disabled = false;
 }
 
-function onCoinSelected(coin) {
-  selCoin = coin;
-  const alertBtn = document.getElementById("start-alert-btn");
-  if (!alertBtn) return;
-  alertBtn.style.display = "block"; 
-  alertBtn.onclick = async function() {
-    try {
-      const response = await fetch(API_URL + "/activate-monitor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tg_id: TG_ID, symbol: selCoin, exchange: selExchange })
-      });
-      const res = await response.json();
-      if (res.status === "ok") {
-        alert("Уведомления запущены на 7 дней!");
-        alertBtn.style.display = "none";
-      } else {
-        alert("Ошибка: " + res.message);
-      }
-    } catch (err) {
-      alert("Сервер недоступен");
-    }
-  };
-}
-
 /* ── SEARCH ── */
 document.getElementById("exchange-search").addEventListener("input", function() {
   var q = this.value.toLowerCase();
@@ -345,16 +346,6 @@ document.getElementById("coin-back").addEventListener("click", function() { show
 document.getElementById("forex-back").addEventListener("click", function() { showScreen("screen-exchange"); });
 document.getElementById("res-back").addEventListener("click", function() {
   showScreen(lastResultType === "forex" ? "screen-forex" : "screen-coin");
-});
-
-/* ── ALERT PCT ── */
-document.getElementById("pct-minus").addEventListener("click", function() { if (alertPct > 1) { alertPct--; setText("pct-val", alertPct); } });
-document.getElementById("pct-plus").addEventListener("click",  function() { if (alertPct < 50) { alertPct++; setText("pct-val", alertPct); } });
-document.getElementById("forex-pct-minus").addEventListener("click", function() {
-  if (forexPct > 0.1) { forexPct = Math.round((forexPct - 0.1) * 10) / 10; setText("forex-pct-val", forexPct); }
-});
-document.getElementById("forex-pct-plus").addEventListener("click", function() {
-  if (forexPct < 20) { forexPct = Math.round((forexPct + 0.1) * 10) / 10; setText("forex-pct-val", forexPct); }
 });
 
 /* ── ANIMATE ── */
@@ -395,7 +386,7 @@ function doCryptoAnalyze() {
   fetch(API_URL + "/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ symbol: selCoin, exchange: selExchange, id: TG_ID, alert_pct: alertPct })
+    body: JSON.stringify({ symbol: selCoin, exchange: selExchange, id: TG_ID, alert_pct: 5 })
   })
   .then(function(r) { return r.json(); })
   .then(function(json) {
@@ -422,7 +413,7 @@ function doForexAnalyze() {
   fetch(API_URL + "/analyze-forex", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ base: selForex, quote: "USD", id: TG_ID, alert_pct: forexPct })
+    body: JSON.stringify({ base: selForex, quote: "USD", id: TG_ID, alert_pct: 1 })
   })
   .then(function(r) { return r.json(); })
   .then(function(json) {
@@ -538,6 +529,63 @@ function renderResult(d, type) {
     var scls = { "позитивный": "green", "негативный": "red", "осторожный": "yellow" };
     sentEl.className = "metric-pill " + (scls[sent] || "");
   }
+
+  // Показываем кнопку мониторинга только для крипты
+  setupMonitorButton(isCrypto);
+}
+
+/* ── КНОПКА МОНИТОРИНГА ── */
+function setupMonitorButton(isCrypto) {
+  var btn  = document.getElementById("start-monitor-btn");
+  var info = document.getElementById("monitor-info");
+  if (!btn || !info) return;
+
+  // Для форекса — не показываем
+  if (!isCrypto) { btn.style.display = "none"; info.style.display = "none"; return; }
+
+  btn.style.display  = "block";
+  info.style.display = "none";
+  btn.disabled = false;
+  btn.textContent = "🔔 Начать мониторинг";
+
+  btn.onclick = function() {
+    btn.disabled = true;
+    btn.textContent = "Запуск...";
+    fetch(API_URL + "/activate-monitor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tg_id: TG_ID, symbol: selCoin, exchange: selExchange })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.status === "ok") {
+        btn.style.display = "none";
+        info.style.display = "block";
+        info.className = "monitor-info success";
+        info.innerHTML =
+          "✅ Мониторинг запущен на 7 дней!<br>" +
+          "<span>У тебя осталось <b>" + (res.remaining !== undefined ? res.remaining : "—") + " из 3</b> запусков на эту неделю. Лимит обновляется каждые 7 дней.</span>";
+      } else {
+        btn.disabled = false;
+        btn.textContent = "🔔 Начать мониторинг";
+        info.style.display = "block";
+        info.className = "monitor-info error";
+        var msg = res.message || "Ошибка";
+        if (msg.toLowerCase().indexOf("лимит") !== -1) {
+          info.innerHTML = "⛔ Лимит исчерпан.<br><span>На этой неделе доступно 3 запуска. Лимит сбрасывается через 7 дней.</span>";
+        } else {
+          info.textContent = "⚠️ " + msg;
+        }
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = "🔔 Начать мониторинг";
+      info.style.display = "block";
+      info.className = "monitor-info error";
+      info.textContent = "⚠️ Сервер недоступен";
+    });
+  };
 }
 
 /* ── CHART ── */
@@ -578,7 +626,7 @@ function drawChart(history, isCrypto) {
         tooltip: {
           backgroundColor: "#1C1C1F", borderColor: "rgba(245,197,24,0.3)", borderWidth: 1,
           titleColor: "#8A8780", bodyColor: "#F0EFE8",
-          bodyFont: { family: "JetBrains Mono", weight: "700", size: 13 },
+          bodyFont: { family: "Arial", weight: "700", size: 13 },
           padding: 10,
           callbacks: {
             label: function(ctx) {
@@ -592,7 +640,7 @@ function drawChart(history, isCrypto) {
         x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#8A8780", font: { family: "DM Sans", size: 11 } }, border: { display: false } },
         y: {
           grid: { color: "rgba(255,255,255,0.05)" },
-          ticks: { color: "#8A8780", font: { family: "JetBrains Mono", size: 10 },
+          ticks: { color: "#8A8780", font: { family: "Arial", size: 10 },
             callback: function(v) { return isCrypto ? fmtPrice(v) : fmtRate(v); }
           },
           min: minV * 0.995, max: maxV * 1.005, border: { display: false }
@@ -604,6 +652,6 @@ function drawChart(history, isCrypto) {
 
 /* ── NEW ── */
 document.getElementById("new-btn").addEventListener("click", function() {
-  selCoin = null; selForex = null; alertPct = 5; forexPct = 1;
+  selCoin = null; selForex = null;
   showScreen("screen-exchange");
 });
