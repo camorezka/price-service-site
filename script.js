@@ -383,25 +383,30 @@ function doCryptoAnalyze() {
   lastResultType = "crypto";
   showScreen("screen-analyzing");
   startAnimate(AN_STEPS_CRYPTO, "Загружаем данные", selCoin.charAt(0));
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 25000);
   fetch(API_URL + "/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ symbol: selCoin, exchange: selExchange, id: TG_ID, alert_pct: 5 })
+    body: JSON.stringify({ symbol: selCoin, exchange: selExchange, id: TG_ID, alert_pct: 5 }),
+    signal: controller.signal
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r) { clearTimeout(timer); return r.json(); })
   .then(function(json) {
     stopAnimate();
     if (!json || json.status !== "ok" || !json.data) {
       showScreen("screen-coin");
-      setTimeout(function() { toast(json && json.message ? json.message : "Ошибка", "error"); }, 350);
+      setTimeout(function() { toast(json && json.message ? json.message : "Ошибка сервера", "error"); }, 350);
       return;
     }
     renderResult(json.data, "crypto");
     showScreen("screen-result");
   })
-  .catch(function() {
+  .catch(function(err) {
+    clearTimeout(timer);
     stopAnimate(); showScreen("screen-coin");
-    setTimeout(function() { toast("Сервер не отвечает", "error"); }, 350);
+    var msg = (err && err.name === "AbortError") ? "Сервер долго не отвечает, попробуй ещё раз" : "Ошибка соединения, попробуй ещё раз";
+    setTimeout(function() { toast(msg, "error"); }, 350);
   });
 }
 
@@ -410,25 +415,30 @@ function doForexAnalyze() {
   lastResultType = "forex";
   showScreen("screen-analyzing");
   startAnimate(AN_STEPS_FOREX, "Загружаем курс", selForex.charAt(0));
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 25000);
   fetch(API_URL + "/analyze-forex", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ base: selForex, quote: "USD", id: TG_ID, alert_pct: 1 })
+    body: JSON.stringify({ base: selForex, quote: "USD", id: TG_ID, alert_pct: 1 }),
+    signal: controller.signal
   })
-  .then(function(r) { return r.json(); })
+  .then(function(r) { clearTimeout(timer); return r.json(); })
   .then(function(json) {
     stopAnimate();
     if (!json || json.status !== "ok" || !json.data) {
       showScreen("screen-forex");
-      setTimeout(function() { toast(json && json.message ? json.message : "Ошибка", "error"); }, 350);
+      setTimeout(function() { toast(json && json.message ? json.message : "Ошибка сервера", "error"); }, 350);
       return;
     }
     renderResult(json.data, "forex");
     showScreen("screen-result");
   })
-  .catch(function() {
+  .catch(function(err) {
+    clearTimeout(timer);
     stopAnimate(); showScreen("screen-forex");
-    setTimeout(function() { toast("Сервер не отвечает", "error"); }, 350);
+    var msg = (err && err.name === "AbortError") ? "Сервер долго не отвечает, попробуй ещё раз" : "Ошибка соединения, попробуй ещё раз";
+    setTimeout(function() { toast(msg, "error"); }, 350);
   });
 }
 
@@ -454,9 +464,7 @@ function fmtChg(v) {
 /* ── RENDER RESULT ── */
 function renderResult(d, type) {
   if (d.current_price_usd === null || d.current_price_usd === undefined) {
-      document.getElementById("price-display").innerText = "Нет данных";
-      console.error("Ошибка: цена от сервера не получена");
-      return;
+      console.warn("Цена от сервера не получена, показываем без цены");
   }
   var isCrypto = type === "crypto";
   var price    = isCrypto ? d.current_price_usd : d.current_rate;
