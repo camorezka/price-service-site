@@ -7,18 +7,13 @@ if (tg) { tg.ready(); tg.expand(); }
 
 var tgUser    = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
 var TG_ID     = tgUser.id || 0;
-var TG_NAME   = tgUser.username || "user";
+var TG_NAME   = tgUser.username || tgUser.first_name || "user";
 var TG_FIRST  = tgUser.first_name || "";
 var TG_LAST   = tgUser.last_name  || "";
 var TG_LANG   = tgUser.language_code || "";
 var TG_PLAT   = (tg && tg.platform) ? tg.platform : (navigator.platform || "");
 
 var isDesktop = /Desktop|Win32|MacIntel|Linux x86_64/i.test(navigator.platform);
-
-if (isDesktop && !window.Telegram.WebApp.initData) {
-  document.body.innerHTML = '<div style="padding:20px; color:white; text-align:center;">Приложение доступно только в мобильной версии Telegram.</div>';
-  throw new Error("Desktop access restricted");
-}
 var selExchange = null;
 var selCoin     = null;
 var selForex    = null;
@@ -70,6 +65,35 @@ var FOREX_LIST = [
   { code: "DKK", name: "Датская крона",        flag: "🇩🇰" },
   { code: "MXN", name: "Мексиканское песо",    flag: "🇲🇽" },
   { code: "RUB", name: "Российский рубль",     flag: "🇷🇺" },
+  { code: "CZK", name: "Чешская крона",         flag: "🇨🇿" },
+  { code: "HUF", name: "Венгерский форинт",     flag: "🇭🇺" },
+  { code: "RON", name: "Румынский лей",          flag: "🇷🇴" },
+  { code: "BGN", name: "Болгарский лев",         flag: "🇧🇬" },
+  { code: "HRK", name: "Хорватская куна",        flag: "🇭🇷" },
+  { code: "ISK", name: "Исландская крона",       flag: "🇮🇸" },
+  { code: "IDR", name: "Индонезийская рупия",    flag: "🇮🇩" },
+  { code: "MYR", name: "Малайзийский ринггит",   flag: "🇲🇾" },
+  { code: "THB", name: "Тайский бат",            flag: "🇹🇭" },
+  { code: "PHP", name: "Филиппинское песо",      flag: "🇵🇭" },
+  { code: "VND", name: "Вьетнамский донг",       flag: "🇻🇳" },
+  { code: "PKR", name: "Пакистанская рупия",     flag: "🇵🇰" },
+  { code: "BDT", name: "Бангладешская така",     flag: "🇧🇩" },
+  { code: "EGP", name: "Египетский фунт",        flag: "🇪🇬" },
+  { code: "NGN", name: "Нигерийская найра",      flag: "🇳🇬" },
+  { code: "ZAR", name: "Южноафриканский рэнд",   flag: "🇿🇦" },
+  { code: "MAD", name: "Марокканский дирхам",    flag: "🇲🇦" },
+  { code: "CLP", name: "Чилийское песо",         flag: "🇨🇱" },
+  { code: "COP", name: "Колумбийское песо",      flag: "🇨🇴" },
+  { code: "ARS", name: "Аргентинское песо",      flag: "🇦🇷" },
+  { code: "PEN", name: "Перуанский соль",        flag: "🇵🇪" },
+  { code: "ILS", name: "Израильский шекель",     flag: "🇮🇱" },
+  { code: "QAR", name: "Катарский риал",         flag: "🇶🇦" },
+  { code: "KWD", name: "Кувейтский динар",       flag: "🇰🇼" },
+  { code: "BHD", name: "Бахрейнский динар",      flag: "🇧🇭" },
+  { code: "OMR", name: "Оманский риал",           flag: "🇴🇲" },
+  { code: "JOD", name: "Иорданский динар",       flag: "🇯🇴" },
+  { code: "TWD", name: "Тайваньский доллар",     flag: "🇹🇼" },
+  { code: "KRW", name: "Южнокорейская вона",     flag: "🇰🇷" },
 ];
 
 var AN_STEPS_CRYPTO = ["Подключаемся к бирже...","Получаем актуальную цену...","Загружаем историю...","Формируем отчёт..."];
@@ -100,9 +124,9 @@ function toast(msg, type) {
   toastTmr = setTimeout(function() { el.classList.remove("show"); }, 3000);
 }
 function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+
 /* ── INIT ── */
 document.addEventListener("DOMContentLoaded", function () {
-  // Безопасный вызов: если функции не существует, код не упадет
   if (typeof buildExchangeCards === 'function') {
       buildExchangeCards(); 
   } else if (typeof buildChips === 'function') {
@@ -112,22 +136,19 @@ document.addEventListener("DOMContentLoaded", function () {
   if (typeof buildForexCards === 'function') buildForexCards();
   buildTutDots();
 
-  var statEl = document.getElementById("load-status");
-  var msgs = [
-    "Подключение...",
-    "Авторизация...",
-    "Загрузка данных..."
-  ];
+  var topUser = document.getElementById("top-username");
+  if (topUser) {
+    var displayName = TG_NAME !== "user" ? "@" + TG_NAME : (TG_FIRST || "@user");
+    topUser.textContent = displayName;
+  }
 
+  var statEl = document.getElementById("load-status");
+  var msgs = ["Подключение...", "Авторизация...", "Загрузка данных..."];
   for (var i = 0; i < msgs.length; i++) {
     (function (m, delay) {
-      setTimeout(function () {
-        if (statEl) statEl.textContent = m;
-      }, delay);
+      setTimeout(function () { if (statEl) statEl.textContent = m; }, delay);
     })(msgs[i], 300 + i * 650);
   }
-  
-  // Авторизация запускается через 500мс после готовности DOM
   setTimeout(authUser, 500);
 });
 
@@ -165,6 +186,7 @@ function buildTutDots() {
   wrap.innerHTML = "";
   for (var i = 0; i < TUT_CNT; i++) {
     var s = document.createElement("span");
+    s.className = "dot";
     if (i === 0) s.classList.add("active");
     (function(idx) { s.addEventListener("click", function() { setTutSlide(idx); }); })(i);
     wrap.appendChild(s);
@@ -228,11 +250,9 @@ function renderCoinCards(coins) {
   coins.forEach(function(co) {
     var el = document.createElement("div");
     el.className = "coin-card"; el.dataset.sym = co.sym;
-    var chgClass = co.chg >= 0 ? "green" : "red";
-    var chgStr   = co.chg !== 0 ? '<span class="cc-chg mono ' + chgClass + '">' + (co.chg >= 0 ? "+" : "") + co.chg + '%</span>' : "";
     el.innerHTML =
       '<div class="cc-sym">' + co.sym + '</div>' +
-      '<div class="cc-info"><div class="cc-name">' + (co.name || co.sym) + '</div>' + chgStr + '</div>' +
+      '<div class="cc-info"><div class="cc-name">' + (co.name || co.sym) + '</div></div>' +
       '<div class="cc-check">✓</div>';
     el.addEventListener("click", function() { selectCoin(co.sym); });
     cc.appendChild(el);
@@ -278,23 +298,16 @@ function selectForex(code) {
 
 function onCoinSelected(coin) {
   selCoin = coin;
-  
   const alertBtn = document.getElementById("start-alert-btn");
   if (!alertBtn) return;
   alertBtn.style.display = "block"; 
-  
   alertBtn.onclick = async function() {
     try {
       const response = await fetch(API_URL + "/activate-monitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tg_id: TG_ID,
-          symbol: selCoin, 
-          exchange: selExchange
-        })
+        body: JSON.stringify({ tg_id: TG_ID, symbol: selCoin, exchange: selExchange })
       });
-      
       const res = await response.json();
       if (res.status === "ok") {
         alert("Уведомления запущены на 7 дней!");
@@ -306,13 +319,6 @@ function onCoinSelected(coin) {
       alert("Сервер недоступен");
     }
   };
-}
-
-function selectForex(code) {
-  selForex = code;
-  document.querySelectorAll(".forex-card").forEach(function(c) { c.classList.toggle("selected", c.dataset.code === code); });
-  var btn = document.getElementById("forex-next");
-  if (btn) btn.disabled = false;
 }
 
 /* ── SEARCH ── */
