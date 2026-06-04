@@ -453,7 +453,11 @@ function fmtChg(v) {
 
 /* ── RENDER RESULT ── */
 function renderResult(d, type) {
-  if (!d) return;
+  if (d.current_price_usd === null || d.current_price_usd === undefined) {
+      document.getElementById("price-display").innerText = "Нет данных";
+      console.error("Ошибка: цена от сервера не получена");
+      return;
+  }
   var isCrypto = type === "crypto";
   var price    = isCrypto ? d.current_price_usd : d.current_rate;
   var priceStr = isCrypto ? fmtPrice(price) : fmtRate(price) + " USD";
