@@ -426,5 +426,116 @@ html, body {
 }
 .btn-action:active {
   transform: scale(0.95);
+
   opacity: 0.7;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ── COIN SYM — нормальный шрифт, не Syne ── */
+.cc-sym {
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  color: var(--yellow);
+  width: 60px;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+/* ── FOREX CODE — нормальный шрифт ── */
+.fxc-code {
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: var(--yellow);
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+
+/* ── ОТСТУП между текстом карточки и символом монеты ── */
+.cc-info {
+  padding-left: 4px;
+}
+.fxc-info {
+  padding-left: 4px;
+}
+
+/* ── ЦИФРЫ — Arial везде, без сжатия ── */
+.mono {
+  font-family: Arial, sans-serif !important;
+  font-feature-settings: normal !important;
+  letter-spacing: 0 !important;
+  font-stretch: normal !important;
+}
+.rh-price      { font-family: Arial, sans-serif !important; font-weight: 700 !important; }
+.change-val    { font-family: Arial, sans-serif !important; font-weight: 700 !important; }
+.change-abs    { font-family: Arial, sans-serif !important; font-weight: 600 !important; }
+.fc-value      { font-family: Arial, sans-serif !important; font-weight: 700 !important; }
+.conf-pct      { font-family: Arial, sans-serif !important; font-weight: 700 !important; }
+.pct-val       { font-family: Arial, sans-serif !important; font-weight: 700 !important; }
+
+/* ── КНОПКА МОНИТОРИНГА ── */
+.btn-monitor {
+  display: inline-block;
+  margin-top: 12px;
+  background: var(--yellow);
+  color: #0D0D0E;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+.btn-monitor:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245,197,24,0.35);
+}
+.btn-monitor:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── ИНФО О МОНИТОРИНГЕ ── */
+.monitor-info {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.monitor-info.success {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #22C55E;
+}
+.monitor-info.success span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.monitor-info.success b {
+  color: var(--yellow);
+}
+.monitor-info.error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #EF4444;
+}
+.monitor-info.error span {
+  color: var(--text-muted);
+  font-size: 12px;
 }
