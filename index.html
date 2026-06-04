@@ -62,7 +62,7 @@
             <text x="165" y="133" font-family="DM Sans,sans-serif" font-size="10" fill="#8A8780" text-anchor="middle">Altcoins</text>
           </svg>
         </div>
-        <h2>9 ведущих бирж</h2>
+        <h2><span class="tut-num">9</span> ведущих бирж</h2>
         <p>Выбери биржу — Binance, Bybit, OKX, KuCoin, Coinbase и другие. Список монет загружается прямо с биржи.</p>
       </div>
 
@@ -82,7 +82,7 @@
           </svg>
         </div>
         <h2>Форекс в реальном времени</h2>
-        <p>25+ валют с живыми курсами. Ищи любую валюту — USD, EUR, UAH и другие.</p>
+        <p><span class="tut-num">55+</span> валют с живыми курсами. Ищи любую валюту — USD, EUR, UAH и другие.</p>
       </div>
 
       <div class="tut-slide" data-slide="3">
@@ -244,16 +244,16 @@
       </div>
     </div>
 
-    <!-- График -->
     <div class="chart-block">
       <div class="chart-title-row">
         <span class="chart-title">График 7 дней</span>
         <span class="chart-chg7 mono" id="chg7-label"></span>
       </div>
-      <canvas id="price-chart" height="130"></canvas>
+      <div style="position:relative; height:130px; width:100%;">
+        <canvas id="price-chart"></canvas>
+      </div>
     </div>
 
-    <!-- Изменение -->
     <div class="change-block" id="change-block">
       <div class="change-icon" id="change-icon">↑</div>
       <div class="change-info">
@@ -263,7 +263,6 @@
       <div class="change-abs mono" id="change-abs">$0</div>
     </div>
 
-    <!-- Прогноз -->
     <div class="forecast-block">
       <div class="chart-title">Прогноз тренда</div>
       <div class="forecast-grid">
@@ -295,7 +294,6 @@
       </div>
     </div>
 
-    <!-- Обзор актива -->
     <div class="ai-block">
       <div class="ai-block-head">
         <span class="ai-icon">◈</span>
@@ -320,13 +318,15 @@
       </div>
     </div>
 
-<div class="result-footer">
-  <button class="btn-primary full" id="start-alert-btn" style="display: none; margin-bottom: 12px;">
-    Запустить уведомления
-  </button>
-  
-  <button class="btn-primary full" id="new-btn">Новый мониторинг</button>
+    <div class="result-footer">
+      <button class="btn-primary full" id="start-alert-btn" style="display: none; margin-bottom: 12px;">
+        Запустить уведомления
+      </button>
+      <button class="btn-primary full" id="new-btn">Новый мониторинг</button>
+    </div>
+  </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
