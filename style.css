@@ -84,7 +84,7 @@ html, body {
   display: flex; flex-direction: column; align-items: center; gap: 18px;
   overflow: hidden;
 }
-.tutorial-slides { width: 100%; height: 280px; position: relative; overflow: hidden; }
+.tutorial-slides { width: 100%; height: 320px; position: relative; overflow: hidden; }
 .tut-slide {
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -339,6 +339,7 @@ html, body {
 .ai-inline-col { flex: 1; }
 .ai-inline-col .ai-row-label { display: block; margin-bottom: 5px; }
 .metrics-row--wide { margin: 0; width: 100%; }
+.ai-sub-head { margin-top: 14px; }
 
 .result-footer { padding: 8px 16px 0; }
 
