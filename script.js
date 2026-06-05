@@ -521,6 +521,12 @@ function renderResult(d, type) {
   var history  = isCrypto ? (d.price_history_7d || []) : (d.rate_history_7d || []);
   var chg24    = Number(d.change_24h) || 0;
   var chg7     = Number(d.change_7d)  || 0;
+  // Если сервер вернул 0 для 24ч — вычисляем из последних двух точек истории
+  if (chg24 === 0 && history.length >= 2) {
+    var pLast = isCrypto ? history[history.length - 1].price : history[history.length - 1].rate;
+    var pPrev = isCrypto ? history[history.length - 2].price : history[history.length - 2].rate;
+    if (pPrev > 0) chg24 = (pLast - pPrev) / pPrev * 100;
+  }
   var fc       = d.forecast    || {};
   var an       = d.ai_analysis || {};
 
