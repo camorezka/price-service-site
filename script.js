@@ -611,52 +611,55 @@ function setupMonitorButton(isCrypto) {
 function showMonitorSuccessOverlay(remaining, alreadyActive) {
   if (alreadyActive) return;
 
-  // Создаём оверлей
   var ov = document.createElement("div");
   ov.id = "monitor-success-overlay";
-  ov.style.cssText = [
-    "position:fixed", "inset:0", "z-index:9999",
-    "background:#0A0A0C",
-    "display:flex", "flex-direction:column",
-    "align-items:center", "justify-content:center",
-    "gap:20px", "padding:24px"
-  ].join(";");
+  ov.style.cssText = "position:fixed; inset:0; z-index:9999; background:#0A0A0C; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px;";
 
-  // Фейерверки
-  var fwL = document.createElement("div"); fwL.className = "firework-left";
-  var fwR = document.createElement("div"); fwR.className = "firework-right";
-  ov.appendChild(fwL);
-  ov.appendChild(fwR);
+  // Создаем 4 зоны конфетти
+  var positions = ["top-left", "top-right", "side-left", "side-right"];
+  positions.forEach(function(pos) {
+    var c = document.createElement("div");
+    c.className = "confetti " + pos;
+    ov.appendChild(c);
+  });
 
-  // Картинка
+  // Добавляем картинку
   var img = document.createElement("img");
   img.src = "86b53d90fbd279ea28d04099ff7518f0-removebg-preview.png";
-  img.style.cssText = "max-width:80%;max-height:40vh;border-radius:16px;object-fit:contain;margin-bottom:10px";
+  img.style.cssText = "max-width:80%;max-height:40vh;border-radius:16px;object-fit:contain;margin-bottom:10px;";
   ov.appendChild(img);
 
   // Текст
   var label = document.createElement("div");
   label.textContent = "Мониторинг успешно запущен!";
-  label.style.cssText = "color:#F0EFE8;font-size:20px;font-weight:700;text-align:center";
+  label.style.cssText = "color:#F0EFE8;font-size:20px;font-weight:700;text-align:center;";
   ov.appendChild(label);
-
-  var sub = document.createElement("div");
-  sub.textContent = "Осталось " + remaining + " из 3 запусков на эту неделю";
-  sub.style.cssText = "color:#8A8780;font-size:14px;text-align:center";
-  ov.appendChild(sub);
 
   document.body.appendChild(ov);
 
-  // --- ПУ-ПУП (Вибрация) ---
+  // --- МАКСИМАЛЬНО ГРОМКАЯ ВИБРАЦИЯ ---
   if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
     var haptic = window.Telegram.WebApp.HapticFeedback;
-    haptic.impactOccurred('medium'); 
+    haptic.impactOccurred('heavy'); // Самый сильный удар
     setTimeout(function() {
-      haptic.impactOccurred('medium');
-    }, 2); // задержка 2 мс
+      haptic.impactOccurred('heavy'); // Второй сильный удар
+    }, 150); 
   }
 
-  // Функция закрытия
+  function closeOverlay() {
+    ov.style.opacity = "0";
+    ov.style.transition = "opacity 0.4s";
+    setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
+  }
+
+  setTimeout(closeOverlay, 3000);
+  ov.addEventListener("click", closeOverlay);
+}
+
+
+
+
+
   function closeOverlay() {
     ov.style.opacity = "0";
     ov.style.transition = "opacity 0.4s";
