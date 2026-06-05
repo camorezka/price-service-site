@@ -546,21 +546,24 @@ html, body {
 
 
 
-.firework-left, .firework-right {
+/* ── Стили для конфетти (замените ими старые firework стили) ── */
+.confetti {
   position: absolute;
-  top: 10%;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, #F5C518 20%, transparent 70%);
+  width: 10px;
+  height: 10px;
+  background: #F5C518;
   border-radius: 50%;
   pointer-events: none;
-  animation: firework-anim 1s ease-out forwards;
+  animation: explode 1.2s ease-out forwards;
 }
 
-.firework-left { left: 5%; }
-.firework-right { right: 5%; }
+/* Позиции вылета конфетти */
+.top-left { top: 10%; left: 10%; }
+.top-right { top: 10%; right: 90%; }
+.side-left { top: 50%; left: 5%; }
+.side-right { top: 50%; right: 5%; }
 
-@keyframes firework-anim {
-  0% { transform: scale(0); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
+@keyframes explode {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(8) translate(var(--tx, 50px), var(--ty, -50px)); opacity: 0; }
 }
