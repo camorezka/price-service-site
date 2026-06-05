@@ -26,7 +26,6 @@ var allCoins    = [];
 
 var EXCHANGES = [
   { id: "binance",  label: "Binance",  sub: "Крупнейшая биржа мира",        vol: "$76B/сут",  tag: "#1 по объёму" },
-  { id: "bybit",    label: "Bybit",    sub: "Spot & Derivatives",            vol: "$18B/сут",  tag: "Derivatives" },
   { id: "okx",      label: "OKX",      sub: "Топ-3 мировая биржа",           vol: "$21B/сут",  tag: "Web3" },
   { id: "kucoin",   label: "KuCoin",   sub: "Альткоины и новинки",           vol: "$3B/сут",   tag: "Altcoins" },
   { id: "coinbase", label: "Coinbase", sub: "Биржа для американцев",         vol: "$5B/сут",   tag: "США" },
