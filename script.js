@@ -608,9 +608,8 @@ function setupMonitorButton(isCrypto) {
   };
 }
 
-/* ── ВИДЕО-ОВЕРЛЕЙ ПОСЛЕ ЗАПУСКА МОНИТОРИНГА ── */
 function showMonitorSuccessOverlay(remaining, alreadyActive) {
-  if (alreadyActive) return; // уже активен — не показываем видео
+  if (alreadyActive) return;
 
   // Создаём оверлей
   var ov = document.createElement("div");
@@ -623,41 +622,48 @@ function showMonitorSuccessOverlay(remaining, alreadyActive) {
     "gap:20px", "padding:24px"
   ].join(";");
 
-  var vid = document.createElement("video");
-  vid.src = "copy_50347C5C-D412-4C03-BCBE-450222D90926.mov";
-  vid.autoplay = true;
-  vid.muted    = true;
-  vid.playsInline = true;
-  vid.loop     = false;
-  vid.style.cssText = "max-width:100%;max-height:55vh;border-radius:16px;object-fit:contain";
+  // Фейерверки
+  var fwL = document.createElement("div"); fwL.className = "firework-left";
+  var fwR = document.createElement("div"); fwR.className = "firework-right";
+  ov.appendChild(fwL);
+  ov.appendChild(fwR);
 
+  // Картинка
+  var img = document.createElement("img");
+  img.src = "86b53d90fbd279ea28d04099ff7518f0-removebg-preview.png";
+  img.style.cssText = "max-width:80%;max-height:40vh;border-radius:16px;object-fit:contain;margin-bottom:10px";
+  ov.appendChild(img);
+
+  // Текст
   var label = document.createElement("div");
   label.textContent = "Мониторинг успешно запущен!";
-  label.style.cssText = [
-    "color:#F0EFE8", "font-size:20px", "font-weight:700",
-    "text-align:center", "letter-spacing:0.01em"
-  ].join(";");
+  label.style.cssText = "color:#F0EFE8;font-size:20px;font-weight:700;text-align:center";
+  ov.appendChild(label);
 
   var sub = document.createElement("div");
   sub.textContent = "Осталось " + remaining + " из 3 запусков на эту неделю";
   sub.style.cssText = "color:#8A8780;font-size:14px;text-align:center";
-
-  ov.appendChild(vid);
-  ov.appendChild(label);
   ov.appendChild(sub);
+
   document.body.appendChild(ov);
 
-  // Закрыть после окончания видео или через 6с, если видео не загрузилось
+  // --- ПУ-ПУП (Вибрация) ---
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+    var haptic = window.Telegram.WebApp.HapticFeedback;
+    haptic.impactOccurred('medium'); 
+    setTimeout(function() {
+      haptic.impactOccurred('medium');
+    }, 2); // задержка 2 мс
+  }
+
+  // Функция закрытия
   function closeOverlay() {
     ov.style.opacity = "0";
     ov.style.transition = "opacity 0.4s";
     setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
   }
-  vid.addEventListener("ended", closeOverlay);
-  vid.addEventListener("error", function() { setTimeout(closeOverlay, 2500); });
-  setTimeout(closeOverlay, 7000);
 
-  // Тап — закрыть
+  setTimeout(closeOverlay, 3000);
   ov.addEventListener("click", closeOverlay);
 }
 
