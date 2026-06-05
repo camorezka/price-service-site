@@ -1,5 +1,6 @@
 body {
   margin-top: 25px;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .coins-wrapper {
@@ -334,6 +335,10 @@ html, body {
 .metric-pill.green  { color: var(--green); background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.2); }
 .metric-pill.red    { color: var(--red);   background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.2); }
 .metric-pill.yellow { color: var(--yellow); background: var(--yellow-soft);  border-color: var(--border); }
+.ai-inline-row { display: flex; gap: 16px; margin-bottom: 14px; }
+.ai-inline-col { flex: 1; }
+.ai-inline-col .ai-row-label { display: block; margin-bottom: 5px; }
+.metrics-row--wide { margin: 0; width: 100%; }
 
 .result-footer { padding: 8px 16px 0; }
 
