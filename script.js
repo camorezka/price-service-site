@@ -5,6 +5,56 @@ var API_URL = "https://price-service-51a3.onrender.com";
 var tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 if (tg) { tg.ready(); tg.expand(); }
 
+// ── Проверка: если открыто в Telegram, но с ПК — блокируем ──
+(function checkTelegramPlatform() {
+  if (!tg) return; // не Telegram — не проверяем
+  var platform = tg.platform || "";
+  var desktopPlatforms = ["tdesktop", "macos", "windows", "linux", "web", "weba", "webk"];
+  var isDesktop = desktopPlatforms.indexOf(platform.toLowerCase()) !== -1;
+  if (!isDesktop) return; // мобильный — всё ок
+
+  // Показываем заглушку поверх всего
+  var blocker = document.createElement("div");
+  blocker.style.cssText = [
+    "position:fixed",
+    "inset:0",
+    "z-index:99999",
+    "background:#0A0A0C",
+    "display:flex",
+    "flex-direction:column",
+    "align-items:center",
+    "justify-content:center",
+    "gap:18px",
+    "padding:32px",
+    "text-align:center"
+  ].join(";");
+
+  var icon = document.createElement("div");
+  icon.textContent = "📱";
+  icon.style.cssText = "font-size:64px;";
+
+  var title = document.createElement("div");
+  title.textContent = "Откройте на телефоне";
+  title.style.cssText = "color:#F0EFE8;font-size:22px;font-weight:700;";
+
+  var sub = document.createElement("div");
+  sub.textContent = "Это приложение работает только на мобильных устройствах. Пожалуйста, откройте его в Telegram на смартфоне.";
+  sub.style.cssText = "color:#9CA3AF;font-size:15px;line-height:1.6;max-width:300px;";
+
+  blocker.appendChild(icon);
+  blocker.appendChild(title);
+  blocker.appendChild(sub);
+
+  // Добавляем как можно раньше
+  if (document.body) {
+    document.body.appendChild(blocker);
+  } else {
+    document.addEventListener("DOMContentLoaded", function() {
+      document.body.appendChild(blocker);
+    });
+  }
+})();
+
 var tgUser    = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
 var TG_ID     = tgUser.id || 0;
 var TG_NAME   = tgUser.username || tgUser.first_name || "user";
@@ -615,14 +665,6 @@ function showMonitorSuccessOverlay(remaining, alreadyActive) {
   ov.id = "monitor-success-overlay";
   ov.style.cssText = "position:fixed; inset:0; z-index:9999; background:#0A0A0C; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px;";
 
-  // Создаем 4 зоны конфетти
-  var positions = ["top-left", "top-right", "side-left", "side-right"];
-  positions.forEach(function(pos) {
-    var c = document.createElement("div");
-    c.className = "confetti " + pos;
-    ov.appendChild(c);
-  });
-
   // Добавляем картинку
   var img = document.createElement("img");
   img.src = "86b53d90fbd279ea28d04099ff7518f0-removebg-preview.png";
@@ -637,13 +679,62 @@ function showMonitorSuccessOverlay(remaining, alreadyActive) {
 
   document.body.appendChild(ov);
 
-  // --- МАКСИМАЛЬНО ГРОМКАЯ ВИБРАЦИЯ ---
+  // --- КОНФЕТТИ: много частиц из левого и правого верхних углов ---
+  var colors = ["#F5C518","#FF5E5B","#00D2FF","#A8FF78","#FF9A9E","#FFECD2","#C2FFD8","#FFF176","#B388FF","#FF80AB"];
+  var totalParticles = 60; // 30 с каждой стороны
+
+  for (var i = 0; i < totalParticles; i++) {
+    (function(idx) {
+      var fromRight = idx >= totalParticles / 2;
+      var delay = Math.random() * 0.5; // разброс по времени вылета
+      setTimeout(function() {
+        var p = document.createElement("div");
+        p.className = "confetti-particle";
+        var color = colors[Math.floor(Math.random() * colors.length)];
+        var w = 7 + Math.random() * 8;
+        var h = 10 + Math.random() * 12;
+        var dur = 1.4 + Math.random() * 0.8;
+        var rot = (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 360);
+        // X-позиция: левый угол 0-20%, правый угол 80-100%
+        var xPercent = fromRight
+          ? (80 + Math.random() * 20)
+          : (Math.random() * 20);
+        // Горизонтальный дрейф: от угла слегка к центру
+        var vx = fromRight
+          ? -(20 + Math.random() * 60)
+          : (20 + Math.random() * 60);
+        var vy = 400 + Math.random() * 400;
+        var borderRadius = Math.random() > 0.5 ? "2px" : "50%";
+
+        p.style.cssText = [
+          "--color:" + color,
+          "--w:" + w.toFixed(1) + "px",
+          "--h:" + h.toFixed(1) + "px",
+          "--dur:" + dur.toFixed(2) + "s",
+          "--delay:0s",
+          "--rot:" + rot.toFixed(0) + "deg",
+          "--vx:" + vx.toFixed(0) + "px",
+          "--vy:" + vy.toFixed(0) + "px",
+          "--r:" + borderRadius,
+          "left:" + xPercent.toFixed(1) + "%",
+          "top:-20px"
+        ].join(";");
+
+        document.body.appendChild(p);
+        setTimeout(function() {
+          if (p.parentNode) p.parentNode.removeChild(p);
+        }, (dur + 0.2) * 1000);
+      }, delay * 1000);
+    })(i);
+  }
+
+  // --- ВИБРАЦИЯ: первая тихая, вторая громкая ---
   if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
     var haptic = window.Telegram.WebApp.HapticFeedback;
-    haptic.impactOccurred('heavy'); // Самый сильный удар
+    haptic.impactOccurred('light'); // первая — тихая
     setTimeout(function() {
-      haptic.impactOccurred('heavy'); // Второй сильный удар
-    }, 150); 
+      haptic.impactOccurred('heavy'); // вторая — громкая
+    }, 350);
   }
 
   function closeOverlay() {
@@ -652,23 +743,13 @@ function showMonitorSuccessOverlay(remaining, alreadyActive) {
     setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
   }
 
-  setTimeout(closeOverlay, 3000);
+  setTimeout(closeOverlay, 3500);
   ov.addEventListener("click", closeOverlay);
 }
 
 
 
 
-
-  function closeOverlay() {
-    ov.style.opacity = "0";
-    ov.style.transition = "opacity 0.4s";
-    setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
-  }
-
-  setTimeout(closeOverlay, 3000);
-  ov.addEventListener("click", closeOverlay);
-}
 
 /* ── CHART ── */
 function drawChart(history, isCrypto) {
