@@ -582,7 +582,8 @@ function renderResult(d, type) {
   var recTag = document.getElementById("ai-rec-tag");
   var rec    = an.recommendation || "держать";
   var rcls   = { "купить": "green", "накапливать": "green", "продать": "red", "держать": "yellow" };
-  if (recTag) { recTag.textContent = rec; recTag.className = "ai-rec-tag " + (rcls[rec] || "yellow"); }
+  var recLabel = { "купить": "Покупка", "накапливать": "Накапливать", "продать": "Продажа", "держать": "Нейтрально", "ожидание": "Ожидание" };
+  if (recTag) { recTag.textContent = recLabel[rec] || rec; recTag.className = "ai-rec-tag " + (rcls[rec] || "yellow"); }
 
   var mt = d.metrics || {};
   var volEl  = document.getElementById("metric-vol");
