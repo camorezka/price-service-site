@@ -571,12 +571,20 @@ function setupMonitorButton(isCrypto) {
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.status === "ok") {
+        // Показываем видео-оверлей поверх экрана результата
+        showMonitorSuccessOverlay(res.remaining !== undefined ? res.remaining : 0, res.already_active);
         btn.style.display = "none";
         info.style.display = "block";
         info.className = "monitor-info success";
-        info.innerHTML =
-          "✅ Мониторинг запущен на 7 дней!<br>" +
-          "<span>У тебя осталось <b>" + (res.remaining !== undefined ? res.remaining : "—") + " из 3</b> запусков на эту неделю. Лимит обновляется каждые 7 дней.</span>";
+        if (res.already_active) {
+          info.innerHTML =
+            "✅ Мониторинг уже активен!<br>" +
+            "<span>Осталось <b>" + res.remaining + " из 3</b> запусков на эту неделю.</span>";
+        } else {
+          info.innerHTML =
+            "✅ Мониторинг запущен!<br>" +
+            "<span>Осталось <b>" + res.remaining + " из 3</b> запусков на эту неделю. Лимит обновляется каждые 7 дней.</span>";
+        }
       } else {
         btn.disabled = false;
         btn.textContent = "🔔 Начать мониторинг";
@@ -584,7 +592,8 @@ function setupMonitorButton(isCrypto) {
         info.className = "monitor-info error";
         var msg = res.message || "Ошибка";
         if (msg.toLowerCase().indexOf("лимит") !== -1) {
-          info.innerHTML = "⛔ Лимит исчерпан.<br><span>На этой неделе доступно 3 запуска. Лимит сбрасывается через 7 дней.</span>";
+          var resetStr = res.reset_in ? " Сброс " + res.reset_in + "." : " Лимит сбрасывается через 7 дней.";
+          info.innerHTML = "⛔ Лимит исчерпан.<br><span>На этой неделе использовано 3 из 3 запусков." + resetStr + "</span>";
         } else {
           info.textContent = "⚠️ " + msg;
         }
@@ -598,6 +607,59 @@ function setupMonitorButton(isCrypto) {
       info.textContent = "⚠️ Сервер недоступен";
     });
   };
+}
+
+/* ── ВИДЕО-ОВЕРЛЕЙ ПОСЛЕ ЗАПУСКА МОНИТОРИНГА ── */
+function showMonitorSuccessOverlay(remaining, alreadyActive) {
+  if (alreadyActive) return; // уже активен — не показываем видео
+
+  // Создаём оверлей
+  var ov = document.createElement("div");
+  ov.id = "monitor-success-overlay";
+  ov.style.cssText = [
+    "position:fixed", "inset:0", "z-index:9999",
+    "background:#0A0A0C",
+    "display:flex", "flex-direction:column",
+    "align-items:center", "justify-content:center",
+    "gap:20px", "padding:24px"
+  ].join(";");
+
+  var vid = document.createElement("video");
+  vid.src = "copy_50347C5C-D412-4C03-BCBE-450222D90926.mov";
+  vid.autoplay = true;
+  vid.muted    = true;
+  vid.playsInline = true;
+  vid.loop     = false;
+  vid.style.cssText = "max-width:100%;max-height:55vh;border-radius:16px;object-fit:contain";
+
+  var label = document.createElement("div");
+  label.textContent = "Мониторинг успешно запущен!";
+  label.style.cssText = [
+    "color:#F0EFE8", "font-size:20px", "font-weight:700",
+    "text-align:center", "letter-spacing:0.01em"
+  ].join(";");
+
+  var sub = document.createElement("div");
+  sub.textContent = "Осталось " + remaining + " из 3 запусков на эту неделю";
+  sub.style.cssText = "color:#8A8780;font-size:14px;text-align:center";
+
+  ov.appendChild(vid);
+  ov.appendChild(label);
+  ov.appendChild(sub);
+  document.body.appendChild(ov);
+
+  // Закрыть после окончания видео или через 6с, если видео не загрузилось
+  function closeOverlay() {
+    ov.style.opacity = "0";
+    ov.style.transition = "opacity 0.4s";
+    setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 450);
+  }
+  vid.addEventListener("ended", closeOverlay);
+  vid.addEventListener("error", function() { setTimeout(closeOverlay, 2500); });
+  setTimeout(closeOverlay, 7000);
+
+  // Тап — закрыть
+  ov.addEventListener("click", closeOverlay);
 }
 
 /* ── CHART ── */
